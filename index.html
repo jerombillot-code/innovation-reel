@@ -752,24 +752,32 @@
                     }
                     
                     addLog('INFO', 'Connexion à MetaMask...');
-                    web3 = new Web3(window.ethereum);
-                    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                    
+                    // Demander la connexion d'abord
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                     userAccount = accounts[0];
+                    
+                    // Initialiser Web3 après la connexion
+                    web3 = new Web3(window.ethereum);
                     
                     // Vérifier et changer de réseau
                     const targetChainId = isTestnet ? CONTRACTS.testnet.chainId : CONTRACTS.mainnet.chainId;
                     const currentChainId = await web3.eth.getChainId();
                     
+                    addLog('INFO', `ChainID actuel: ${currentChainId}, cible: ${targetChainId}`);
+                    
                     if (Number(currentChainId) !== targetChainId) {
                         addLog('WARNING', `Changement vers ${isTestnet ? 'BSC Testnet' : 'BSC Mainnet'}...`);
                         try {
-                            await ethereum.request({
+                            await window.ethereum.request({
                                 method: 'wallet_switchEthereumChain',
                                 params: [{ chainId: web3.utils.toHex(targetChainId) }],
                             });
+                            addLog('SUCCESS', 'Réseau changé avec succès!');
                         } catch (switchError) {
                             if (switchError.code === 4902) {
                                 // Ajouter le réseau s'il n'existe pas
+                                addLog('INFO', 'Ajout du réseau BSC...');
                                 await addBSCNetwork(isTestnet);
                             } else {
                                 throw switchError;
@@ -809,7 +817,16 @@
                 
             } catch (error) {
                 addLog('ERROR', `Erreur connexion: ${error.message}`);
-                console.error(error);
+                console.error('Erreur détaillée:', error);
+                
+                // Messages d'erreur plus explicites
+                if (error.code === 4001) {
+                    alert('❌ Connexion refusée\n\nVous avez refusé la connexion dans MetaMask.');
+                } else if (error.code === -32002) {
+                    alert('⚠️ Demande en attente\n\nVeuillez vérifier MetaMask, une demande de connexion est déjà en attente.');
+                } else {
+                    alert(`❌ Erreur: ${error.message}\n\nVérifiez que MetaMask est bien installé et déverrouillé.`);
+                }
             }
         }
 
@@ -838,12 +855,14 @@
                     blockExplorerUrls: ['https://bscscan.com']
                 };
                 
-                await ethereum.request({
+                await window.ethereum.request({
                     method: 'wallet_addEthereumChain',
                     params: [params],
                 });
+                addLog('SUCCESS', 'Réseau BSC ajouté!');
             } catch (error) {
                 addLog('ERROR', 'Erreur ajout réseau: ' + error.message);
+                throw error;
             }
         }
 
