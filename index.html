@@ -6,7 +6,6 @@
     <title>AI Crypto Trading Bot 2025 - Trading Réel</title>
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <style>
         * {
             margin: 0;
@@ -610,103 +609,13 @@
         let trades = {winning: 0, losing: 0, total: 0, profit: 0};
         let currentPrice = 0;
         let sentimentScore = 50;
-        let mlModel;
         let priceChart;
         let profitChart;
         let isTestnet = true;
 
-        // Adresses des contrats (BSC)
-        const CONTRACTS = {
-            mainnet: {
-                PANCAKE_ROUTER: '0x10ED43C718714eb63d5aA57B78B54704E256024E',
-                WBNB: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
-                BUSD: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56',
-                USDT: '0x55d398326f99059fF775485246999027B3197955',
-                rpcUrl: 'https://bsc-dataseed.binance.org/',
-                chainId: 56
-            },
-            testnet: {
-                PANCAKE_ROUTER: '0xD99D1c33F9fC3444f8101754aBC46c52416550D1',
-                WBNB: '0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd',
-                BUSD: '0x78867BbEeF44f2326bF8DDd1941a4439382EF2A7',
-                USDT: '0x7ef95a0FEE0Dd31b22626fA2e10Ee6A223F8a684',
-                rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
-                chainId: 97
-            }
-        };
-
-        // ABI PancakeSwap Router
-        const ROUTER_ABI = [
-            {
-                "inputs": [
-                    {"internalType": "uint256", "name": "amountOutMin", "type": "uint256"},
-                    {"internalType": "address[]", "name": "path", "type": "address[]"},
-                    {"internalType": "address", "name": "to", "type": "address"},
-                    {"internalType": "uint256", "name": "deadline", "type": "uint256"}
-                ],
-                "name": "swapExactETHForTokens",
-                "outputs": [{"internalType": "uint256[]", "name": "amounts", "type": "uint256[]"}],
-                "stateMutability": "payable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"internalType": "uint256", "name": "amountIn", "type": "uint256"},
-                    {"internalType": "uint256", "name": "amountOutMin", "type": "uint256"},
-                    {"internalType": "address[]", "name": "path", "type": "address[]"},
-                    {"internalType": "address", "name": "to", "type": "address"},
-                    {"internalType": "uint256", "name": "deadline", "type": "uint256"}
-                ],
-                "name": "swapExactTokensForETH",
-                "outputs": [{"internalType": "uint256[]", "name": "amounts", "type": "uint256[]"}],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"internalType": "uint256", "name": "amountIn", "type": "uint256"},
-                    {"internalType": "address[]", "name": "path", "type": "address[]"}
-                ],
-                "name": "getAmountsOut",
-                "outputs": [{"internalType": "uint256[]", "name": "amounts", "type": "uint256[]"}],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ];
-
-        // ABI ERC20
-        const ERC20_ABI = [
-            {
-                "inputs": [
-                    {"internalType": "address", "name": "spender", "type": "address"},
-                    {"internalType": "uint256", "name": "amount", "type": "uint256"}
-                ],
-                "name": "approve",
-                "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
-                "name": "balanceOf",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"internalType": "address", "name": "owner", "type": "address"},
-                    {"internalType": "address", "name": "spender", "type": "address"}
-                ],
-                "name": "allowance",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ];
-
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Application démarrée');
             initCharts();
             setupEventListeners();
             startPriceWebSocket();
@@ -714,4 +623,103 @@
             startWhaleTracking();
             startArbitrageScanner();
             addLog('INFO', 'Bot initialisé - Mode Trading Réel actif');
-            addLog
+            addLog('WARNING', '⚠️ Testez d\'abord sur TESTNET avant d\'utiliser du vrai argent!');
+        });
+
+        // Event Listeners
+        function setupEventListeners() {
+            document.getElementById('connectionType').addEventListener('change', function() {
+                const privateKeyDiv = document.getElementById('privateKeyInput');
+                privateKeyDiv.style.display = this.value === 'privatekey' ? 'block' : 'none';
+            });
+
+            document.getElementById('connectBtn').addEventListener('click', connectWallet);
+            document.getElementById('startBotBtn').addEventListener('click', startBot);
+            document.getElementById('stopBotBtn').addEventListener('click', stopBot);
+            document.getElementById('tradingPair').addEventListener('change', function() {
+                if (ws) ws.close();
+                startPriceWebSocket();
+            });
+            
+            document.getElementById('networkType').addEventListener('change', function() {
+                isTestnet = this.value === 'testnet';
+                addLog('INFO', `Réseau changé: ${isTestnet ? 'TESTNET' : 'MAINNET'}`);
+            });
+        }
+
+        // Connexion Wallet - VERSION SIMPLIFIÉE ET FONCTIONNELLE
+        async function connectWallet() {
+            console.log('🔌 Début connexion wallet');
+            const type = document.getElementById('connectionType').value;
+            isTestnet = document.getElementById('networkType').value === 'testnet';
+            
+            try {
+                if (type === 'metamask') {
+                    // Vérifier si MetaMask est installé
+                    if (!window.ethereum) {
+                        console.error('❌ MetaMask non trouvé');
+                        addLog('ERROR', 'MetaMask non installé!');
+                        alert('❌ MetaMask non installé!\n\n1. Installez MetaMask depuis: https://metamask.io\n2. Créez un wallet\n3. Revenez ici et reconnectez');
+                        return;
+                    }
+                    
+                    console.log('✅ MetaMask détecté');
+                    addLog('INFO', 'MetaMask détecté, demande de connexion...');
+                    
+                    // Demander les comptes
+                    try {
+                        const accounts = await window.ethereum.request({ 
+                            method: 'eth_requestAccounts' 
+                        });
+                        
+                        console.log('📋 Comptes reçus:', accounts);
+                        
+                        if (!accounts || accounts.length === 0) {
+                            throw new Error('Aucun compte trouvé');
+                        }
+                        
+                        userAccount = accounts[0];
+                        addLog('SUCCESS', `Compte: ${userAccount.substring(0, 10)}...`);
+                        
+                    } catch (requestError) {
+                        console.error('❌ Erreur demande comptes:', requestError);
+                        
+                        if (requestError.code === 4001) {
+                            addLog('ERROR', 'Connexion refusée par l\'utilisateur');
+                            alert('❌ Vous avez refusé la connexion.\n\nCliquez à nouveau et acceptez la connexion dans MetaMask.');
+                            return;
+                        } else if (requestError.code === -32002) {
+                            addLog('WARNING', 'Demande déjà en attente');
+                            alert('⏳ Une demande est déjà en attente!\n\nOuvrez MetaMask et acceptez la connexion.');
+                            return;
+                        }
+                        throw requestError;
+                    }
+                    
+                    // Initialiser Web3
+                    console.log('🌐 Initialisation Web3...');
+                    web3 = new Web3(window.ethereum);
+                    addLog('SUCCESS', 'Web3 initialisé');
+                    
+                    // Obtenir le chainId actuel
+                    const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
+                    const currentChainId = parseInt(chainIdHex, 16);
+                    const targetChainId = isTestnet ? 97 : 56;
+                    
+                    console.log(`🔗 ChainID: actuel=${currentChainId}, cible=${targetChainId}`);
+                    addLog('INFO', `Réseau actuel: ChainID ${currentChainId}`);
+                    
+                    // Changer de réseau si nécessaire
+                    if (currentChainId !== targetChainId) {
+                        addLog('WARNING', `Changement vers ${isTestnet ? 'BSC Testnet' : 'BSC Mainnet'}...`);
+                        
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_switchEthereumChain',
+                                params: [{ chainId: '0x' + targetChainId.toString(16) }],
+                            });
+                            addLog('SUCCESS', 'Réseau changé!');
+                        } catch (switchError) {
+                            console.error('❌ Erreur changement réseau:', switchError);
+                            
+                            // Si le rés
