@@ -132,6 +132,12 @@
             border-radius: 10px;
             margin: 10px 0;
         }
+        .price-change {
+            font-size: 0.5em;
+            margin-left: 10px;
+        }
+        .price-up { color: #00ff00; }
+        .price-down { color: #ff0000; }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -171,6 +177,30 @@
         .log-error { color: #ff0000; }
         .log-warning { color: #ffa500; }
         .log-info { color: #00f5ff; }
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin: 15px 0;
+        }
+        .indicator-value {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 5px;
+            font-weight: bold;
+        }
+        .indicator-bullish {
+            background: rgba(0,255,0,0.2);
+            color: #00ff00;
+        }
+        .indicator-bearish {
+            background: rgba(255,0,0,0.2);
+            color: #ff0000;
+        }
+        .indicator-neutral {
+            background: rgba(255,165,0,0.2);
+            color: #ffa500;
+        }
         .modal {
             display: none;
             position: fixed;
@@ -250,6 +280,45 @@
         .pair-card:hover {
             background: rgba(255,255,255,0.1);
         }
+        .signal-card {
+            background: rgba(0,255,136,0.1);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .signal-strong {
+            border-color: #00ff00;
+            background: rgba(0,255,0,0.1);
+        }
+        .signal-sell {
+            border-color: #ff0000;
+            background: rgba(255,0,0,0.1);
+        }
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .signal-type {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .signal-strength {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .strength-strong {
+            background: #00ff00;
+            color: #000;
+        }
+        .strength-medium {
+            background: #ffa500;
+            color: #000;
+        }
     </style>
 </head>
 <body>
@@ -260,7 +329,7 @@
                 🚨 ATTENTION: Transactions RÉELLES sur la blockchain! Vérifiez toujours avant de confirmer!
             </div>
             <div class="info-banner">
-                ✅ Prix on-chain via PancakeSwap | 🔄 Swap automatique | 💰 Vraies transactions
+                ✅ Prix on-chain via PancakeSwap | 🔄 Swap automatique | 💰 Vraies transactions | 📊 Analyse technique
             </div>
         </div>
 
@@ -273,8 +342,6 @@
                     <select id="networkType">
                         <option value="bsc">BSC Mainnet</option>
                         <option value="bsc-testnet">BSC Testnet</option>
-                        <option value="polygon">Polygon</option>
-                        <option value="ethereum">Ethereum</option>
                     </select>
                 </div>
                 <button class="btn" id="connectBtn">🔗 Connecter MetaMask</button>
@@ -295,589 +362,64 @@
                 </div>
             </div>
 
-            <!-- DEX Selection -->
+            <!-- Real-time Price with Indicators -->
             <div class="card">
-                <h2>🏦 DEX (Exchange Décentralisé)</h2>
-                <div class="dex-card" onclick="selectDEX('pancakeswap')">
-                    <div class="dex-logo">🥞</div>
-                    <strong>PancakeSwap</strong>
-                    <div style="font-size: 0.85em; color: #aaa;">Le plus populaire sur BSC</div>
-                </div>
-                <div class="dex-card" onclick="selectDEX('uniswap')">
-                    <div class="dex-logo">🦄</div>
-                    <strong>Uniswap</strong>
-                    <div style="font-size: 0.85em; color: #aaa;">Leader sur Ethereum</div>
-                </div>
-                <div style="margin-top: 10px; padding: 10px; background: rgba(0,255,0,0.1); border-radius: 5px;">
-                    <strong>DEX sélectionné:</strong> <span id="selectedDEX">Aucun</span>
-                </div>
-            </div>
-
-            <!-- Token Selection -->
-            <div class="card">
-                <h2>💰 Paire de Trading</h2>
+                <h2><span class="status-indicator status-active"></span> Prix On-Chain + Analyse</h2>
                 <div class="input-group">
-                    <label>Token à acheter/vendre</label>
-                    <select id="tokenSelect">
-                        <option value="WBNB">WBNB (Wrapped BNB)</option>
-                        <option value="BUSD">BUSD</option>
-                        <option value="USDT">USDT</option>
-                        <option value="CAKE">CAKE</option>
-                        <option value="ETH">ETH</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label>Contre (Quote)</label>
-                    <select id="quoteSelect">
-                        <option value="USDT">USDT</option>
-                        <option value="BUSD">BUSD</option>
-                        <option value="WBNB">WBNB</option>
+                    <label>Paire de trading</label>
+                    <select id="tradingPair">
+                        <option value="WBNB/USDT">WBNB/USDT</option>
+                        <option value="CAKE/USDT">CAKE/USDT</option>
+                        <option value="BUSD/USDT">BUSD/USDT</option>
                     </select>
                 </div>
                 <button class="btn" id="loadPriceBtn">📊 Charger Prix On-Chain</button>
                 <div class="price-display" id="onchainPrice">
                     Cliquez pour charger
                 </div>
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Technical Indicators -->
+            <div class="card">
+                <h2><span class="status-indicator status-active"></span> Indicateurs Techniques</h2>
+                <div style="margin: 15px 0;">
+                    <div style="margin-bottom: 10px;">
+                        <strong>RSI (14):</strong>
+                        <span class="indicator-value" id="rsiValue">--</span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>MACD:</strong>
+                        <span class="indicator-value" id="macdValue">--</span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>MA (50):</strong>
+                        <span class="indicator-value" id="ma50Value">--</span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>Bollinger:</strong>
+                        <span class="indicator-value" id="bbValue">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Signals -->
+            <div class="card">
+                <h2><span class="status-indicator status-active"></span> Signaux AI</h2>
+                <div id="signalsContainer">
+                    <div style="text-align: center; color: #aaa; padding: 20px;">
+                        Démarrez le bot pour voir les signaux
+                    </div>
+                </div>
+                <button class="btn" id="startAnalysisBtn" style="margin-top: 10px;">
+                    🤖 Démarrer Analyse Auto
+                </button>
             </div>
 
             <!-- Trading Configuration -->
             <div class="card">
                 <h2>⚙️ Configuration Trade</h2>
                 <div class="input-group">
-                    <label>Type d'ordre</label>
-                    <select id="orderType">
-                        <option value="market">Market (Immédiat)</option>
-                        <option value="limit">Limit (Prix cible)</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label>Montant (en token quote)</label>
-                    <input type="number" id="tradeAmount" value="0.01" min="0.001" step="0.001">
-                    <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
-                        Montant à trader
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label>Slippage toléré (%)</label>
-                    <input type="number" id="slippage" value="1" min="0.1" max="50" step="0.1">
-                    <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
-                        Recommandé: 1-3% (plus = plus de risque)
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label>Gas Price (Gwei)</label>
-                    <input type="number" id="gasPrice" value="5" min="1" max="100" step="1">
-                    <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
-                        Plus haut = plus rapide mais plus cher
-                    </div>
-                </div>
-            </div>
-
-            <!-- Trade Execution -->
-            <div class="card">
-                <h2>🎯 Exécution</h2>
-                <div style="background: rgba(255,165,0,0.2); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                    <strong>⚠️ Vérifications avant trade:</strong>
-                    <div style="margin-top: 10px; font-size: 0.9em;">
-                        ✓ Wallet connecté<br>
-                        ✓ Balance suffisante<br>
-                        ✓ Gas fees estimés<br>
-                        ✓ Slippage acceptable
-                    </div>
-                </div>
-                <button class="btn" id="buyBtn" style="background: linear-gradient(135deg, #00ff00, #00cc00);">
-                    🟢 ACHETER (BUY)
-                </button>
-                <button class="btn btn-danger" id="sellBtn">
-                    🔴 VENDRE (SELL)
-                </button>
-                <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; font-size: 0.85em;">
-                    <strong>Fees estimés:</strong><br>
-                    Gas: <span id="gasEstimate">~0.0003 BNB</span><br>
-                    DEX Fee: 0.25%<br>
-                    <strong>Total: <span id="totalFees">~0.0003 BNB</span></strong>
-                </div>
-            </div>
-
-            <!-- Transaction History -->
-            <div class="card">
-                <h2>📜 Transactions</h2>
-                <div id="txHistory" style="max-height: 300px; overflow-y: auto;">
-                    <div style="text-align: center; color: #aaa; padding: 20px;">
-                        Aucune transaction
-                    </div>
-                </div>
-            </div>
-
-            <!-- Logs -->
-            <div class="card" style="grid-column: 1 / -1;">
-                <h2>📝 Logs Système</h2>
-                <div class="log-container" id="logContainer">
-                    <div class="log-entry log-info">[INFO] Système initialisé - Mode blockchain RÉEL</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Trade Confirmation Modal -->
-    <div class="modal" id="tradeModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                ⚠️ CONFIRMATION TRANSACTION BLOCKCHAIN
-            </div>
-            <div class="trade-summary" id="tradeSummary"></div>
-            <div style="background: rgba(255,0,0,0.2); padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 0.9em;">
-                <strong>⚠️ Cette transaction est IRRÉVERSIBLE!</strong><br>
-                Vérifiez tous les détails avant de confirmer.
-            </div>
-            <div class="modal-buttons">
-                <button class="btn btn-danger" id="cancelTradeBtn">❌ Annuler</button>
-                <button class="btn btn-confirm" id="confirmTradeBtn">✅ CONFIRMER & SIGNER</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // PancakeSwap Router on BSC Mainnet
-        const PANCAKE_ROUTER = '0x10ED43C718714eb63d5aA57B78B54704E256024E';
-        const WBNB_ADDRESS = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
-        const USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955';
-        const BUSD_ADDRESS = '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56';
-
-        // ERC20 ABI (minimal)
-        const ERC20_ABI = [
-            {
-                "constant": true,
-                "inputs": [{"name": "_owner", "type": "address"}],
-                "name": "balanceOf",
-                "outputs": [{"name": "balance", "type": "uint256"}],
-                "type": "function"
-            },
-            {
-                "constant": false,
-                "inputs": [
-                    {"name": "_spender", "type": "address"},
-                    {"name": "_value", "type": "uint256"}
-                ],
-                "name": "approve",
-                "outputs": [{"name": "", "type": "bool"}],
-                "type": "function"
-            }
-        ];
-
-        // PancakeSwap Router ABI (minimal)
-        const ROUTER_ABI = [
-            {
-                "inputs": [
-                    {"internalType": "uint256", "name": "amountIn", "type": "uint256"},
-                    {"internalType": "address[]", "name": "path", "type": "address[]"}
-                ],
-                "name": "getAmountsOut",
-                "outputs": [{"internalType": "uint256[]", "name": "amounts", "type": "uint256[]"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"internalType": "uint256", "name": "amountIn", "type": "uint256"},
-                    {"internalType": "uint256", "name": "amountOutMin", "type": "uint256"},
-                    {"internalType": "address[]", "name": "path", "type": "address[]"},
-                    {"internalType": "address", "name": "to", "type": "address"},
-                    {"internalType": "uint256", "name": "deadline", "type": "uint256"}
-                ],
-                "name": "swapExactTokensForTokens",
-                "outputs": [{"internalType": "uint256[]", "name": "amounts", "type": "uint256[]"}],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            }
-        ];
-
-        let web3;
-        let userAccount;
-        let selectedDEX = null;
-        let routerContract;
-        let currentOnchainPrice = 0;
-
-        document.addEventListener('DOMContentLoaded', function() {
-            setupEventListeners();
-            addLog('INFO', 'Interface blockchain chargée');
-        });
-
-        function setupEventListeners() {
-            document.getElementById('connectBtn').addEventListener('click', connectWallet);
-            document.getElementById('loadPriceBtn').addEventListener('click', loadOnChainPrice);
-            document.getElementById('buyBtn').addEventListener('click', () => prepareTrade('BUY'));
-            document.getElementById('sellBtn').addEventListener('click', () => prepareTrade('SELL'));
-            document.getElementById('cancelTradeBtn').addEventListener('click', cancelTrade);
-            document.getElementById('confirmTradeBtn').addEventListener('click', executeBlockchainTrade);
-        }
-
-        function selectDEX(dex) {
-            selectedDEX = dex;
-            document.getElementById('selectedDEX').textContent = dex === 'pancakeswap' ? 'PancakeSwap' : 'Uniswap';
-            addLog('INFO', `DEX sélectionné: ${dex}`);
-        }
-
-        async function connectWallet() {
-            const btn = document.getElementById('connectBtn');
-            btn.disabled = true;
-            btn.textContent = '🔄 Connexion...';
-            
-            try {
-                if (typeof window.ethereum === 'undefined') {
-                    throw new Error('MetaMask non installé! Installez-le sur metamask.io');
-                }
-                
-                addLog('INFO', 'Demande de connexion MetaMask...');
-                
-                const accounts = await window.ethereum.request({ 
-                    method: 'eth_requestAccounts' 
-                });
-                
-                userAccount = accounts[0];
-                web3 = new Web3(window.ethereum);
-                
-                // Switch to BSC if needed
-                const networkType = document.getElementById('networkType').value;
-                if (networkType === 'bsc') {
-                    try {
-                        await window.ethereum.request({
-                            method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: '0x38' }], // BSC Mainnet
-                        });
-                    } catch (switchError) {
-                        if (switchError.code === 4902) {
-                            await window.ethereum.request({
-                                method: 'wallet_addEthereumChain',
-                                params: [{
-                                    chainId: '0x38',
-                                    chainName: 'Binance Smart Chain',
-                                    nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-                                    rpcUrls: ['https://bsc-dataseed.binance.org/'],
-                                    blockExplorerUrls: ['https://bscscan.com/']
-                                }]
-                            });
-                        }
-                    }
-                }
-                
-                // Get balances
-                const bnbBalance = await web3.eth.getBalance(userAccount);
-                const bnbBalanceEth = web3.utils.fromWei(bnbBalance, 'ether');
-                
-                // Get USDT balance
-                const usdtContract = new web3.eth.Contract(ERC20_ABI, USDT_ADDRESS);
-                const usdtBalance = await usdtContract.methods.balanceOf(userAccount).call();
-                const usdtBalanceFormatted = (Number(usdtBalance) / 1e18).toFixed(2);
-                
-                // Update UI
-                document.getElementById('walletStatus').className = 'status-indicator status-active';
-                document.getElementById('walletAddress').textContent = userAccount;
-                document.getElementById('bnbBalance').textContent = parseFloat(bnbBalanceEth).toFixed(4);
-                document.getElementById('usdtBalance').textContent = usdtBalanceFormatted;
-                document.getElementById('walletInfo').style.display = 'block';
-                
-                btn.textContent = '✅ Connecté';
-                addLog('SUCCESS', `Wallet connecté: ${userAccount.substring(0, 10)}...`);
-                addLog('INFO', `Balance: ${parseFloat(bnbBalanceEth).toFixed(4)} BNB, ${usdtBalanceFormatted} USDT`);
-                
-                // Initialize router contract
-                routerContract = new web3.eth.Contract(ROUTER_ABI, PANCAKE_ROUTER);
-                selectDEX('pancakeswap');
-                
-            } catch (error) {
-                console.error('Error:', error);
-                addLog('ERROR', error.message);
-                alert('❌ ' + error.message);
-                btn.disabled = false;
-                btn.textContent = '🔗 Connecter MetaMask';
-            }
-        }
-
-        async function loadOnChainPrice() {
-            if (!web3 || !userAccount) {
-                alert('⚠️ Connectez d\'abord votre wallet!');
-                return;
-            }
-            
-            try {
-                addLog('INFO', 'Chargement du prix on-chain...');
-                
-                const token = document.getElementById('tokenSelect').value;
-                const quote = document.getElementById('quoteSelect').value;
-                
-                // Get token addresses
-                const tokenAddress = token === 'WBNB' ? WBNB_ADDRESS : 
-                                    token === 'USDT' ? USDT_ADDRESS : BUSD_ADDRESS;
-                const quoteAddress = quote === 'USDT' ? USDT_ADDRESS : 
-                                    quote === 'BUSD' ? BUSD_ADDRESS : WBNB_ADDRESS;
-                
-                // Get price from PancakeSwap
-                const amountIn = web3.utils.toWei('1', 'ether');
-                const path = [tokenAddress, quoteAddress];
-                
-                const amounts = await routerContract.methods.getAmountsOut(amountIn, path).call();
-                const priceOut = web3.utils.fromWei(amounts[1].toString(), 'ether');
-                
-                currentOnchainPrice = parseFloat(priceOut);
-                
-                document.getElementById('onchainPrice').innerHTML = `
-                    <div style="font-size: 0.5em; color: #aaa;">Prix On-Chain</div>
-                    1 ${token} = ${currentOnchainPrice.toFixed(6)} ${quote}
-                `;
-                
-                addLog('SUCCESS', `Prix chargé: 1 ${token} = ${currentOnchainPrice.toFixed(6)} ${quote}`);
-                
-            } catch (error) {
-                console.error('Error:', error);
-                addLog('ERROR', 'Erreur lors du chargement du prix: ' + error.message);
-                alert('❌ Erreur: ' + error.message);
-            }
-        }
-
-        function prepareTrade(type) {
-            if (!web3 || !userAccount) {
-                alert('⚠️ Connectez d\'abord votre wallet!');
-                return;
-            }
-            
-            if (!selectedDEX) {
-                alert('⚠️ Sélectionnez un DEX!');
-                return;
-            }
-            
-            if (currentOnchainPrice === 0) {
-                alert('⚠️ Chargez d\'abord le prix on-chain!');
-                return;
-            }
-            
-            const amount = parseFloat(document.getElementById('tradeAmount').value);
-            const slippage = parseFloat(document.getElementById('slippage').value);
-            const token = document.getElementById('tokenSelect').value;
-            const quote = document.getElementById('quoteSelect').value;
-            const gasPrice = document.getElementById('gasPrice').value;
-            
-            const expectedAmount = type === 'BUY' ? 
-                (amount / currentOnchainPrice).toFixed(6) : 
-                (amount * currentOnchainPrice).toFixed(6);
-            
-            const minReceived = type === 'BUY' ?
-                (expectedAmount * (1 - slippage / 100)).toFixed(6) :
-                (expectedAmount * (1 - slippage / 100)).toFixed(6);
-            
-            const gasCost = (gasPrice * 150000 / 1e9).toFixed(6); // Estimate 150k gas
-            
-            document.getElementById('tradeSummary').innerHTML = `
-                <div class="trade-summary-row">
-                    <strong>Vous recevez (estimé):</strong>
-                    <span>${expectedAmount} ${type === 'BUY' ? token : quote}</span>
-                </div>
-                <div class="trade-summary-row">
-                    <strong>Minimum garanti:</strong>
-                    <span style="color: #ffa500">${minReceived} ${type === 'BUY' ? token : quote}</span>
-                </div>
-                <div class="trade-summary-row">
-                    <strong>Prix on-chain:</strong>
-                    <span>${currentOnchainPrice.toFixed(6)}</span>
-                </div>
-                <div class="trade-summary-row">
-                    <strong>Slippage:</strong>
-                    <span>${slippage}%</span>
-                </div>
-                <div class="trade-summary-row">
-                    <strong>Gas estimé:</strong>
-                    <span style="color: #ff8c00">${gasCost} BNB (~${(gasCost * 600).toFixed(2)})</span>
-                </div>
-                <div class="trade-summary-row">
-                    <strong>DEX Fee:</strong>
-                    <span>0.25%</span>
-                </div>
-                <div class="trade-summary-row" style="border-top: 2px solid #00f5ff; margin-top: 10px; padding-top: 10px;">
-                    <strong style="font-size: 1.1em;">COÛT TOTAL:</strong>
-                    <span style="font-size: 1.1em; color: #00ff88">${(parseFloat(amount) + parseFloat(gasCost)).toFixed(6)} ${type === 'BUY' ? quote : token}</span>
-                </div>
-            `;
-            
-            document.getElementById('tradeModal').style.display = 'flex';
-            addLog('WARNING', `Préparation trade ${type}: ${amount} ${quote}`);
-        }
-
-        function cancelTrade() {
-            document.getElementById('tradeModal').style.display = 'none';
-            addLog('INFO', 'Trade annulé');
-        }
-
-        async function executeBlockchainTrade() {
-            const confirmBtn = document.getElementById('confirmTradeBtn');
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = '⏳ Transaction en cours...';
-            
-            try {
-                const type = document.getElementById('buyBtn').textContent.includes('ACHETER') ? 'BUY' : 'SELL';
-                const amount = parseFloat(document.getElementById('tradeAmount').value);
-                const slippage = parseFloat(document.getElementById('slippage').value);
-                const gasPrice = document.getElementById('gasPrice').value;
-                
-                const token = document.getElementById('tokenSelect').value;
-                const quote = document.getElementById('quoteSelect').value;
-                
-                const tokenAddress = token === 'WBNB' ? WBNB_ADDRESS : 
-                                    token === 'USDT' ? USDT_ADDRESS : BUSD_ADDRESS;
-                const quoteAddress = quote === 'USDT' ? USDT_ADDRESS : 
-                                    quote === 'BUSD' ? BUSD_ADDRESS : WBNB_ADDRESS;
-                
-                addLog('INFO', '📝 Préparation de la transaction blockchain...');
-                
-                // Convert amount to Wei
-                const amountWei = web3.utils.toWei(amount.toString(), 'ether');
-                
-                // Calculate minimum amount out with slippage
-                const expectedOut = type === 'BUY' ? 
-                    (amount / currentOnchainPrice) : 
-                    (amount * currentOnchainPrice);
-                const minAmountOut = expectedOut * (1 - slippage / 100);
-                const minAmountOutWei = web3.utils.toWei(minAmountOut.toFixed(18), 'ether');
-                
-                // Set path
-                const path = type === 'BUY' ? 
-                    [quoteAddress, tokenAddress] : 
-                    [tokenAddress, quoteAddress];
-                
-                // Approve token first (if needed)
-                const tokenContract = new web3.eth.Contract(
-                    ERC20_ABI, 
-                    type === 'BUY' ? quoteAddress : tokenAddress
-                );
-                
-                addLog('INFO', '🔓 Approbation du token...');
-                
-                const approveTx = await tokenContract.methods.approve(
-                    PANCAKE_ROUTER,
-                    amountWei
-                ).send({
-                    from: userAccount,
-                    gasPrice: web3.utils.toWei(gasPrice, 'gwei')
-                });
-                
-                addLog('SUCCESS', `✅ Token approuvé! TX: ${approveTx.transactionHash.substring(0, 10)}...`);
-                
-                // Execute swap
-                addLog('INFO', '🔄 Exécution du swap...');
-                
-                const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes
-                
-                const swapTx = await routerContract.methods.swapExactTokensForTokens(
-                    amountWei,
-                    minAmountOutWei,
-                    path,
-                    userAccount,
-                    deadline
-                ).send({
-                    from: userAccount,
-                    gasPrice: web3.utils.toWei(gasPrice, 'gwei')
-                });
-                
-                addLog('SUCCESS', `🎉 SWAP RÉUSSI! TX Hash: ${swapTx.transactionHash}`);
-                
-                // Add to transaction history
-                addTransactionToHistory({
-                    type: type,
-                    amount: amount,
-                    pair: `${token}/${quote}`,
-                    hash: swapTx.transactionHash,
-                    timestamp: new Date().toLocaleString()
-                });
-                
-                // Update balances
-                setTimeout(() => connectWallet(), 3000);
-                
-                document.getElementById('tradeModal').style.display = 'none';
-                alert(`✅ Transaction réussie!\n\nTX: ${swapTx.transactionHash}\n\nVoir sur BSCScan: https://bscscan.com/tx/${swapTx.transactionHash}`);
-                
-            } catch (error) {
-                console.error('Transaction error:', error);
-                addLog('ERROR', '❌ Erreur transaction: ' + error.message);
-                alert('❌ Transaction échouée: ' + error.message);
-            } finally {
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = '✅ CONFIRMER & SIGNER';
-            }
-        }
-
-        function addTransactionToHistory(tx) {
-            const historyDiv = document.getElementById('txHistory');
-            
-            // Remove "no transactions" message
-            if (historyDiv.textContent.includes('Aucune transaction')) {
-                historyDiv.innerHTML = '';
-            }
-            
-            const txCard = document.createElement('div');
-            txCard.className = 'pair-card';
-            txCard.style.flexDirection = 'column';
-            txCard.style.alignItems = 'flex-start';
-            
-            txCard.innerHTML = `
-                <div style="display: flex; justify-content: space-between; width: 100%;">
-                    <strong style="color: ${tx.type === 'BUY' ? '#00ff00' : '#ff0000'}">${tx.type}</strong>
-                    <span>${tx.pair}</span>
-                </div>
-                <div style="font-size: 0.85em; color: #aaa; margin-top: 5px;">
-                    ${tx.amount} | ${tx.timestamp}
-                </div>
-                <div style="font-size: 0.75em; color: #00f5ff; margin-top: 5px; word-break: break-all;">
-                    TX: ${tx.hash}
-                </div>
-                <a href="https://bscscan.com/tx/${tx.hash}" target="_blank" 
-                   style="color: #00ff88; font-size: 0.8em; margin-top: 5px; text-decoration: underline;">
-                    🔗 Voir sur BSCScan
-                </a>
-            `;
-            
-            historyDiv.insertBefore(txCard, historyDiv.firstChild);
-        }
-
-        function addLog(type, message) {
-            const logContainer = document.getElementById('logContainer');
-            const entry = document.createElement('div');
-            entry.className = 'log-entry log-' + type.toLowerCase();
-            const time = new Date().toLocaleTimeString();
-            entry.textContent = `[${time}] [${type}] ${message}`;
-            logContainer.insertBefore(entry, logContainer.firstChild);
-            
-            while (logContainer.children.length > 100) {
-                logContainer.removeChild(logContainer.lastChild);
-            }
-        }
-
-                        // Update gas estimate periodically
-        setInterval(async () => {
-            if (web3) {
-                try {
-                    const gasPrice = await web3.eth.getGasPrice();
-                    const gasPriceGwei = Number(web3.utils.fromWei(gasPrice.toString(), 'gwei'));
-                    document.getElementById('gasPrice').value = Math.ceil(gasPriceGwei);
-                    
-                    const estimatedCost = ((gasPriceGwei * 150000) / 1e9).toFixed(6);
-                    document.getElementById('gasEstimate').textContent = `~${estimatedCost} BNB`;
-                    document.getElementById('totalFees').textContent = `~${estimatedCost} BNB`;
-                } catch (error) {
-                    console.error('Gas price update error:', error);
-                }
-            }
-        }, 15000);
-    </script>
-</body>
-</html>
-                    <strong>Type:</strong>
-                    <span style="color: ${type === 'BUY' ? '#00ff00' : '#ff0000'}; font-size: 1.2em;">${type}</span>
-                </div>
-                <div class="trade-summary-row">
-                    <strong>Paire:</strong>
-                    <span>${token}/${quote}</span>
-                </div>
-                <div class="trade-summary-row">
-                    <strong>Vous ${type === 'BUY' ? 'payez' : 'vendez'}:</strong>
-                    <span>${amount} ${type === 'BUY' ? quote : token}</span>
-                </div>
-                <div class="trade-summary-row">
+                    <label>Montant (BNB/
