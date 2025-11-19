@@ -568,7 +568,7 @@
                 // Get USDT balance
                 const usdtContract = new web3.eth.Contract(ERC20_ABI, USDT_ADDRESS);
                 const usdtBalance = await usdtContract.methods.balanceOf(userAccount).call();
-                const usdtBalanceFormatted = (usdtBalance / 1e18).toFixed(2);
+                const usdtBalanceFormatted = (Number(usdtBalance) / 1e18).toFixed(2);
                 
                 // Update UI
                 document.getElementById('walletStatus').className = 'status-indicator status-active';
@@ -617,7 +617,7 @@
                 const path = [tokenAddress, quoteAddress];
                 
                 const amounts = await routerContract.methods.getAmountsOut(amountIn, path).call();
-                const priceOut = web3.utils.fromWei(amounts[1], 'ether');
+                const priceOut = web3.utils.fromWei(amounts[1].toString(), 'ether');
                 
                 currentOnchainPrice = parseFloat(priceOut);
                 
@@ -850,15 +850,15 @@
             }
         }
 
-        // Update gas estimate periodically
+                        // Update gas estimate periodically
         setInterval(async () => {
             if (web3) {
                 try {
                     const gasPrice = await web3.eth.getGasPrice();
-                    const gasPriceGwei = web3.utils.fromWei(gasPrice, 'gwei');
-                    document.getElementById('gasPrice').value = Math.ceil(parseFloat(gasPriceGwei));
+                    const gasPriceGwei = Number(web3.utils.fromWei(gasPrice.toString(), 'gwei'));
+                    document.getElementById('gasPrice').value = Math.ceil(gasPriceGwei);
                     
-                    const estimatedCost = (gasPriceGwei * 150000 / 1e9).toFixed(6);
+                    const estimatedCost = ((gasPriceGwei * 150000) / 1e9).toFixed(6);
                     document.getElementById('gasEstimate').textContent = `~${estimatedCost} BNB`;
                     document.getElementById('totalFees').textContent = `~${estimatedCost} BNB`;
                 } catch (error) {
