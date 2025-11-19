@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Crypto Trading Bot 2025</title>
+    <title>Bot Trading Blockchain RÉEL</title>
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -37,14 +37,12 @@
             margin: 15px 0;
             font-weight: bold;
         }
-        .feature-badge {
-            display: inline-block;
+        .info-banner {
             background: rgba(0,245,255,0.2);
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            margin: 2px;
-            border: 1px solid rgba(0,245,255,0.4);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 2px solid #00f5ff;
         }
         .grid {
             display: grid;
@@ -71,9 +69,12 @@
             border-radius: 50%;
             display: inline-block;
         }
-        .status-active { background: #00ff00; }
+        .status-active { background: #00ff00; animation: pulse 2s infinite; }
         .status-inactive { background: #ff0000; }
-        .status-warning { background: #ffa500; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
         .input-group { margin-bottom: 15px; }
         .input-group label {
             display: block;
@@ -101,14 +102,25 @@
             font-size: 1em;
             width: 100%;
             margin-top: 10px;
+            transition: transform 0.2s;
         }
+        .btn:hover { transform: scale(1.05); }
         .btn:disabled {
             background: #555;
             cursor: not-allowed;
+            transform: none;
         }
         .btn-danger {
             background: linear-gradient(135deg, #ff0080, #ff8c00);
             color: #fff;
+        }
+        .btn-confirm {
+            background: linear-gradient(135deg, #00ff00, #00cc00);
+            animation: glow 1.5s infinite;
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(0,255,0,0.5); }
+            50% { box-shadow: 0 0 20px rgba(0,255,0,0.8); }
         }
         .price-display {
             font-size: 2em;
@@ -120,12 +132,6 @@
             border-radius: 10px;
             margin: 10px 0;
         }
-        .price-change {
-            font-size: 0.5em;
-            margin-left: 10px;
-        }
-        .price-up { color: #00ff00; }
-        .price-down { color: #ff0000; }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -165,765 +171,713 @@
         .log-error { color: #ff0000; }
         .log-warning { color: #ffa500; }
         .log-info { color: #00f5ff; }
-        .sentiment-bar {
-            height: 30px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-        .sentiment-fill {
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
             height: 100%;
-            display: flex;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            color: #000;
         }
-        .whale-alert {
-            background: rgba(255,0,128,0.2);
-            border: 2px solid #ff0080;
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 600px;
+            border: 2px solid #00f5ff;
+            animation: slideDown 0.3s;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            font-size: 1.5em;
+            color: #00f5ff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .trade-summary {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
             border-radius: 10px;
-            padding: 10px;
-            margin: 10px 0;
+            margin: 15px 0;
         }
-        .arbitrage-opportunity {
-            background: rgba(255,215,0,0.1);
-            border: 2px solid #ffd700;
+        .trade-summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            flex: 1;
+        }
+        .dex-card {
+            background: rgba(0,245,255,0.1);
+            border: 2px solid #00f5ff;
             border-radius: 10px;
             padding: 15px;
             margin: 10px 0;
-        }
-        .opportunity-profit {
-            font-size: 1.5em;
-            color: #ffd700;
-            font-weight: bold;
-        }
-        .chart-container {
-            position: relative;
-            height: 200px;
-            margin: 15px 0;
-        }
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
             cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            border-radius: 34px;
+            transition: all 0.3s;
         }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            border-radius: 50%;
+        .dex-card:hover {
+            background: rgba(0,245,255,0.2);
+            transform: scale(1.02);
         }
-        input:checked + .slider {
-            background-color: #00ff88;
+        .dex-logo {
+            font-size: 2em;
+            margin-bottom: 10px;
         }
-        input:checked + .slider:before {
-            transform: translateX(26px);
+        .pair-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .pair-card:hover {
+            background: rgba(255,255,255,0.1);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>AI Crypto Trading Bot 2025</h1>
+            <h1>⛓️ Bot Trading Blockchain RÉEL</h1>
             <div class="warning-banner">
-                MODE TRADING REEL
+                🚨 ATTENTION: Transactions RÉELLES sur la blockchain! Vérifiez toujours avant de confirmer!
             </div>
-            <div style="margin-top: 15px;">
-                <span class="feature-badge">AI Trading</span>
-                <span class="feature-badge">Sentiment</span>
-                <span class="feature-badge">Whale Detection</span>
-                <span class="feature-badge">Arbitrage</span>
+            <div class="info-banner">
+                ✅ Prix on-chain via PancakeSwap | 🔄 Swap automatique | 💰 Vraies transactions
             </div>
         </div>
 
         <div class="grid">
+            <!-- Wallet Connection -->
             <div class="card">
-                <h2><span class="status-indicator status-inactive" id="walletStatus"></span> Wallet</h2>
+                <h2><span class="status-indicator status-inactive" id="walletStatus"></span> Wallet & Network</h2>
                 <div class="input-group">
-                    <label>Type</label>
-                    <select id="connectionType">
-                        <option value="metamask">MetaMask</option>
-                        <option value="privatekey">Cle Privee</option>
-                    </select>
-                </div>
-                <div class="input-group" id="privateKeyInput" style="display: none;">
-                    <label>Cle Privee</label>
-                    <input type="password" id="privateKey" placeholder="0x...">
-                </div>
-                <div class="input-group">
-                    <label>Reseau</label>
+                    <label>Réseau Blockchain</label>
                     <select id="networkType">
-                        <option value="testnet">BSC Testnet</option>
-                        <option value="mainnet">BSC Mainnet</option>
+                        <option value="bsc">BSC Mainnet</option>
+                        <option value="bsc-testnet">BSC Testnet</option>
+                        <option value="polygon">Polygon</option>
+                        <option value="ethereum">Ethereum</option>
                     </select>
                 </div>
-                <button class="btn" id="connectBtn">Connecter</button>
+                <button class="btn" id="connectBtn">🔗 Connecter MetaMask</button>
                 <div id="walletInfo" style="margin-top: 15px; display: none;">
-                    <div style="font-size: 0.85em; color: #00f5ff;">
-                        <strong>Adresse:</strong> <span id="walletAddress"></span>
+                    <div style="font-size: 0.85em; color: #00f5ff; word-break: break-all;">
+                        <strong>Adresse:</strong><br><span id="walletAddress"></span>
                     </div>
-                    <div style="font-size: 0.85em; color: #00ff88; margin-top: 5px;">
-                        <strong>Balance:</strong> <span id="walletBalance"></span> BNB
+                    <div class="stats-grid" style="margin-top: 10px;">
+                        <div class="stat-item">
+                            <div class="stat-label">BNB</div>
+                            <div class="stat-value" id="bnbBalance">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">USDT</div>
+                            <div class="stat-value" id="usdtBalance">0</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
+            <!-- DEX Selection -->
             <div class="card">
-                <h2><span class="status-indicator status-active"></span> Prix</h2>
+                <h2>🏦 DEX (Exchange Décentralisé)</h2>
+                <div class="dex-card" onclick="selectDEX('pancakeswap')">
+                    <div class="dex-logo">🥞</div>
+                    <strong>PancakeSwap</strong>
+                    <div style="font-size: 0.85em; color: #aaa;">Le plus populaire sur BSC</div>
+                </div>
+                <div class="dex-card" onclick="selectDEX('uniswap')">
+                    <div class="dex-logo">🦄</div>
+                    <strong>Uniswap</strong>
+                    <div style="font-size: 0.85em; color: #aaa;">Leader sur Ethereum</div>
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background: rgba(0,255,0,0.1); border-radius: 5px;">
+                    <strong>DEX sélectionné:</strong> <span id="selectedDEX">Aucun</span>
+                </div>
+            </div>
+
+            <!-- Token Selection -->
+            <div class="card">
+                <h2>💰 Paire de Trading</h2>
                 <div class="input-group">
-                    <label>Paire</label>
-                    <select id="tradingPair">
-                        <option value="BTCUSDT">BTC/USDT</option>
-                        <option value="ETHUSDT">ETH/USDT</option>
-                        <option value="BNBUSDT">BNB/USDT</option>
-                    </select>
-                </div>
-                <div class="price-display">
-                    <span id="currentPrice">--</span>
-                    <span class="price-change" id="priceChange">--</span>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-label">24h High</div>
-                        <div class="stat-value" id="high24h">--</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">24h Low</div>
-                        <div class="stat-value" id="low24h">--</div>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="priceChart"></canvas>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2><span class="status-indicator status-active"></span> Sentiment AI</h2>
-                <div style="text-align: center; margin: 15px 0;">
-                    <div style="font-size: 3em; font-weight: bold; color: #00f5ff;" id="sentimentScore">--</div>
-                    <div style="font-size: 0.9em; color: #aaa;">Score (0-100)</div>
-                </div>
-                <div class="sentiment-bar">
-                    <div class="sentiment-fill" id="sentimentBar" style="width: 50%;">NEUTRE</div>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-label">Twitter</div>
-                        <div class="stat-value" id="twitterSentiment">--</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Reddit</div>
-                        <div class="stat-value" id="redditSentiment">--</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2><span class="status-indicator status-warning"></span> Whale Tracker</h2>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-label">Whales</div>
-                        <div class="stat-value" id="activeWhales">0</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Volume</div>
-                        <div class="stat-value" id="whaleVolume">$0</div>
-                    </div>
-                </div>
-                <div id="whaleAlerts" style="max-height: 200px; overflow-y: auto; margin-top: 15px;">
-                    <div style="text-align: center; color: #aaa; padding: 20px;">
-                        En attente...
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2><span class="status-indicator status-active"></span> Arbitrage</h2>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-label">Opportunites</div>
-                        <div class="stat-value" id="arbOpportunities">0</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Profit</div>
-                        <div class="stat-value" id="arbProfit">$0</div>
-                    </div>
-                </div>
-                <div id="arbitrageList" style="max-height: 200px; overflow-y: auto; margin-top: 15px;">
-                    <div style="text-align: center; color: #aaa; padding: 20px;">
-                        Scan...
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>Configuration</h2>
-                <div class="input-group">
-                    <label>Capital de Trading (BNB)</label>
-                    <input type="number" id="tradingCapital" value="0.1" min="0.01" step="0.01">
-                    <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
-                        Capital disponible pour le trading automatique
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label>Strategie</label>
-                    <select id="strategy">
-                        <option value="manual">Manuel</option>
-                        <option value="ml">ML Adaptatif</option>
-                        <option value="sentiment">Sentiment</option>
-                        <option value="arbitrage">Arbitrage</option>
-                        <option value="whale">Whale</option>
-                        <option value="hybrid">Hybrid</option>
+                    <label>Token à acheter/vendre</label>
+                    <select id="tokenSelect">
+                        <option value="WBNB">WBNB (Wrapped BNB)</option>
+                        <option value="BUSD">BUSD</option>
+                        <option value="USDT">USDT</option>
+                        <option value="CAKE">CAKE</option>
+                        <option value="ETH">ETH</option>
                     </select>
                 </div>
                 <div class="input-group">
-                    <label>Montant par Trade (BNB)</label>
+                    <label>Contre (Quote)</label>
+                    <select id="quoteSelect">
+                        <option value="USDT">USDT</option>
+                        <option value="BUSD">BUSD</option>
+                        <option value="WBNB">WBNB</option>
+                    </select>
+                </div>
+                <button class="btn" id="loadPriceBtn">📊 Charger Prix On-Chain</button>
+                <div class="price-display" id="onchainPrice">
+                    Cliquez pour charger
+                </div>
+            </div>
+
+            <!-- Trading Configuration -->
+            <div class="card">
+                <h2>⚙️ Configuration Trade</h2>
+                <div class="input-group">
+                    <label>Type d'ordre</label>
+                    <select id="orderType">
+                        <option value="market">Market (Immédiat)</option>
+                        <option value="limit">Limit (Prix cible)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Montant (en token quote)</label>
                     <input type="number" id="tradeAmount" value="0.01" min="0.001" step="0.001">
                     <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
-                        Montant investi par trade (max <span id="maxTradeAmount">10%</span> du capital)
+                        Montant à trader
                     </div>
                 </div>
                 <div class="input-group">
-                    <label>Risk Management</label>
-                    <div style="display: flex; gap: 10px;">
-                        <div style="flex: 1;">
-                            <label style="font-size: 0.85em;">Stop Loss (%)</label>
-                            <input type="number" id="stopLoss" value="2" min="0.5" max="10" step="0.5">
-                        </div>
-                        <div style="flex: 1;">
-                            <label style="font-size: 0.85em;">Take Profit (%)</label>
-                            <input type="number" id="takeProfit" value="3" min="0.5" max="20" step="0.5">
-                        </div>
+                    <label>Slippage toléré (%)</label>
+                    <input type="number" id="slippage" value="1" min="0.1" max="50" step="0.1">
+                    <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
+                        Recommandé: 1-3% (plus = plus de risque)
                     </div>
                 </div>
                 <div class="input-group">
-                    <label style="display: flex; align-items: center; justify-content: space-between;">
-                        <span>Mode Automatique</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="autoMode">
-                            <span class="slider"></span>
-                        </label>
-                    </label>
+                    <label>Gas Price (Gwei)</label>
+                    <input type="number" id="gasPrice" value="5" min="1" max="100" step="1">
+                    <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
+                        Plus haut = plus rapide mais plus cher
+                    </div>
                 </div>
-                <div style="background: rgba(255,215,0,0.1); padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 0.85em;">
-                    <strong>Capital disponible:</strong> <span id="availableCapital">0.1</span> BNB<br>
-                    <strong>Capital utilise:</strong> <span id="usedCapital">0</span> BNB<br>
-                    <strong>Trades max simultanes:</strong> <span id="maxTrades">10</span>
-                </div>
-                <button class="btn" id="startBotBtn">Demarrer</button>
-                <button class="btn btn-danger" id="stopBotBtn" style="display: none;">Arreter</button>
             </div>
 
+            <!-- Trade Execution -->
             <div class="card">
-                <h2>Performances</h2>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-label">Trades</div>
-                        <div class="stat-value" id="winningTrades">0</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Win Rate</div>
-                        <div class="stat-value" id="winRate">0%</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Profit</div>
-                        <div class="stat-value" id="totalProfit">0 BNB</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">ROI</div>
-                        <div class="stat-value" id="roi">0%</div>
+                <h2>🎯 Exécution</h2>
+                <div style="background: rgba(255,165,0,0.2); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <strong>⚠️ Vérifications avant trade:</strong>
+                    <div style="margin-top: 10px; font-size: 0.9em;">
+                        ✓ Wallet connecté<br>
+                        ✓ Balance suffisante<br>
+                        ✓ Gas fees estimés<br>
+                        ✓ Slippage acceptable
                     </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="profitChart"></canvas>
+                <button class="btn" id="buyBtn" style="background: linear-gradient(135deg, #00ff00, #00cc00);">
+                    🟢 ACHETER (BUY)
+                </button>
+                <button class="btn btn-danger" id="sellBtn">
+                    🔴 VENDRE (SELL)
+                </button>
+                <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; font-size: 0.85em;">
+                    <strong>Fees estimés:</strong><br>
+                    Gas: <span id="gasEstimate">~0.0003 BNB</span><br>
+                    DEX Fee: 0.25%<br>
+                    <strong>Total: <span id="totalFees">~0.0003 BNB</span></strong>
                 </div>
             </div>
 
+            <!-- Transaction History -->
+            <div class="card">
+                <h2>📜 Transactions</h2>
+                <div id="txHistory" style="max-height: 300px; overflow-y: auto;">
+                    <div style="text-align: center; color: #aaa; padding: 20px;">
+                        Aucune transaction
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs -->
             <div class="card" style="grid-column: 1 / -1;">
-                <h2>Logs</h2>
+                <h2>📝 Logs Système</h2>
                 <div class="log-container" id="logContainer">
-                    <div class="log-entry log-info">[INFO] Systeme initialise</div>
+                    <div class="log-entry log-info">[INFO] Système initialisé - Mode blockchain RÉEL</div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Trade Confirmation Modal -->
+    <div class="modal" id="tradeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                ⚠️ CONFIRMATION TRANSACTION BLOCKCHAIN
+            </div>
+            <div class="trade-summary" id="tradeSummary"></div>
+            <div style="background: rgba(255,0,0,0.2); padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 0.9em;">
+                <strong>⚠️ Cette transaction est IRRÉVERSIBLE!</strong><br>
+                Vérifiez tous les détails avant de confirmer.
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-danger" id="cancelTradeBtn">❌ Annuler</button>
+                <button class="btn btn-confirm" id="confirmTradeBtn">✅ CONFIRMER & SIGNER</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        var web3;
-        var userAccount;
-        var isTestnet = true;
-        var botActive = false;
-        var priceHistory = [];
-        var profitHistory = [];
-        var trades = {winning: 0, losing: 0, total: 0, profit: 0};
-        var currentPrice = 0;
-        var sentimentScore = 50;
-        var priceChart;
-        var profitChart;
-        var whaleCount = 0;
-        var arbCount = 0;
-        var tradingCapital = 0.1;
-        var usedCapital = 0;
-        var activeTrades = 0;
+        // PancakeSwap Router on BSC Mainnet
+        const PANCAKE_ROUTER = '0x10ED43C718714eb63d5aA57B78B54704E256024E';
+        const WBNB_ADDRESS = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
+        const USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955';
+        const BUSD_ADDRESS = '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56';
+
+        // ERC20 ABI (minimal)
+        const ERC20_ABI = [
+            {
+                "constant": true,
+                "inputs": [{"name": "_owner", "type": "address"}],
+                "name": "balanceOf",
+                "outputs": [{"name": "balance", "type": "uint256"}],
+                "type": "function"
+            },
+            {
+                "constant": false,
+                "inputs": [
+                    {"name": "_spender", "type": "address"},
+                    {"name": "_value", "type": "uint256"}
+                ],
+                "name": "approve",
+                "outputs": [{"name": "", "type": "bool"}],
+                "type": "function"
+            }
+        ];
+
+        // PancakeSwap Router ABI (minimal)
+        const ROUTER_ABI = [
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "amountIn", "type": "uint256"},
+                    {"internalType": "address[]", "name": "path", "type": "address[]"}
+                ],
+                "name": "getAmountsOut",
+                "outputs": [{"internalType": "uint256[]", "name": "amounts", "type": "uint256[]"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "amountIn", "type": "uint256"},
+                    {"internalType": "uint256", "name": "amountOutMin", "type": "uint256"},
+                    {"internalType": "address[]", "name": "path", "type": "address[]"},
+                    {"internalType": "address", "name": "to", "type": "address"},
+                    {"internalType": "uint256", "name": "deadline", "type": "uint256"}
+                ],
+                "name": "swapExactTokensForTokens",
+                "outputs": [{"internalType": "uint256[]", "name": "amounts", "type": "uint256[]"}],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+        ];
+
+        let web3;
+        let userAccount;
+        let selectedDEX = null;
+        let routerContract;
+        let currentOnchainPrice = 0;
 
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
-            initCharts();
-            startPriceUpdates();
-            startSentimentAnalysis();
-            startWhaleTracking();
-            startArbitrageScanner();
-            updateCapitalDisplay();
-            addLog('INFO', 'Bot initialise');
+            addLog('INFO', 'Interface blockchain chargée');
         });
 
         function setupEventListeners() {
-            document.getElementById('connectionType').addEventListener('change', function() {
-                document.getElementById('privateKeyInput').style.display = 
-                    this.value === 'privatekey' ? 'block' : 'none';
-            });
-
             document.getElementById('connectBtn').addEventListener('click', connectWallet);
-            document.getElementById('startBotBtn').addEventListener('click', startBot);
-            document.getElementById('stopBotBtn').addEventListener('click', stopBot);
-            
-            document.getElementById('tradingCapital').addEventListener('input', function() {
-                tradingCapital = parseFloat(this.value);
-                updateCapitalDisplay();
-            });
-            
-            document.getElementById('tradeAmount').addEventListener('input', function() {
-                updateCapitalDisplay();
-            });
+            document.getElementById('loadPriceBtn').addEventListener('click', loadOnChainPrice);
+            document.getElementById('buyBtn').addEventListener('click', () => prepareTrade('BUY'));
+            document.getElementById('sellBtn').addEventListener('click', () => prepareTrade('SELL'));
+            document.getElementById('cancelTradeBtn').addEventListener('click', cancelTrade);
+            document.getElementById('confirmTradeBtn').addEventListener('click', executeBlockchainTrade);
         }
 
-        function updateCapitalDisplay() {
-            var capital = parseFloat(document.getElementById('tradingCapital').value);
-            var tradeAmount = parseFloat(document.getElementById('tradeAmount').value);
-            var maxTrades = Math.floor(capital / tradeAmount);
-            var maxPercentage = ((tradeAmount / capital) * 100).toFixed(1);
-            
-            document.getElementById('availableCapital').textContent = (capital - usedCapital).toFixed(4);
-            document.getElementById('usedCapital').textContent = usedCapital.toFixed(4);
-            document.getElementById('maxTrades').textContent = maxTrades;
-            document.getElementById('maxTradeAmount').textContent = maxPercentage + '%';
-            
-            if (tradeAmount > capital * 0.2) {
-                document.getElementById('maxTradeAmount').style.color = '#ff0000';
-                document.getElementById('maxTradeAmount').textContent = maxPercentage + '% (RISQUE ELEVE!)';
-            } else {
-                document.getElementById('maxTradeAmount').style.color = '#00ff88';
-            }
-        }
-
-        function initCharts() {
-            var ctxPrice = document.getElementById('priceChart').getContext('2d');
-            priceChart = new Chart(ctxPrice, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Prix',
-                        data: [],
-                        borderColor: '#00f5ff',
-                        backgroundColor: 'rgba(0,245,255,0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } }
-                }
-            });
-
-            var ctxProfit = document.getElementById('profitChart').getContext('2d');
-            profitChart = new Chart(ctxProfit, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Profit',
-                        data: [],
-                        borderColor: '#00ff88',
-                        backgroundColor: 'rgba(0,255,136,0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } }
-                }
-            });
+        function selectDEX(dex) {
+            selectedDEX = dex;
+            document.getElementById('selectedDEX').textContent = dex === 'pancakeswap' ? 'PancakeSwap' : 'Uniswap';
+            addLog('INFO', `DEX sélectionné: ${dex}`);
         }
 
         async function connectWallet() {
-            var type = document.getElementById('connectionType').value;
-            var connectBtn = document.getElementById('connectBtn');
-            
-            connectBtn.disabled = true;
-            connectBtn.textContent = 'Connexion...';
+            const btn = document.getElementById('connectBtn');
+            btn.disabled = true;
+            btn.textContent = '🔄 Connexion...';
             
             try {
-                if (type === 'metamask') {
-                    if (typeof window.ethereum === 'undefined') {
-                        throw new Error('MetaMask non installe');
-                    }
-                    
-                    addLog('INFO', 'Connexion MetaMask...');
-                    
-                    var accounts = await window.ethereum.request({ 
-                        method: 'eth_requestAccounts' 
-                    });
-                    
-                    userAccount = accounts[0];
-                    web3 = new Web3(window.ethereum);
-                    
-                    var balanceWei = await web3.eth.getBalance(userAccount);
-                    var balanceBNB = web3.utils.fromWei(balanceWei, 'ether');
-                    
-                    updateWalletUI(userAccount, balanceBNB);
-                    addLog('SUCCESS', 'Connecte! Balance: ' + parseFloat(balanceBNB).toFixed(4) + ' BNB');
-                    
-                } else {
-                    var privateKey = document.getElementById('privateKey').value.trim();
-                    if (!privateKey || !privateKey.startsWith('0x')) {
-                        throw new Error('Cle privee invalide');
-                    }
-                    
-                    var rpcUrl = 'https://bsc-dataseed.binance.org/';
-                    web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl));
-                    var account = web3.eth.accounts.privateKeyToAccount(privateKey);
-                    web3.eth.accounts.wallet.add(account);
-                    userAccount = account.address;
-                    
-                    var balanceWei = await web3.eth.getBalance(userAccount);
-                    var balanceBNB = web3.utils.fromWei(balanceWei, 'ether');
-                    
-                    updateWalletUI(userAccount, balanceBNB);
-                    addLog('SUCCESS', 'Connecte via cle privee!');
+                if (typeof window.ethereum === 'undefined') {
+                    throw new Error('MetaMask non installé! Installez-le sur metamask.io');
                 }
                 
-                connectBtn.textContent = 'Connecte';
+                addLog('INFO', 'Demande de connexion MetaMask...');
+                
+                const accounts = await window.ethereum.request({ 
+                    method: 'eth_requestAccounts' 
+                });
+                
+                userAccount = accounts[0];
+                web3 = new Web3(window.ethereum);
+                
+                // Switch to BSC if needed
+                const networkType = document.getElementById('networkType').value;
+                if (networkType === 'bsc') {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x38' }], // BSC Mainnet
+                        });
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: '0x38',
+                                    chainName: 'Binance Smart Chain',
+                                    nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+                                    rpcUrls: ['https://bsc-dataseed.binance.org/'],
+                                    blockExplorerUrls: ['https://bscscan.com/']
+                                }]
+                            });
+                        }
+                    }
+                }
+                
+                // Get balances
+                const bnbBalance = await web3.eth.getBalance(userAccount);
+                const bnbBalanceEth = web3.utils.fromWei(bnbBalance, 'ether');
+                
+                // Get USDT balance
+                const usdtContract = new web3.eth.Contract(ERC20_ABI, USDT_ADDRESS);
+                const usdtBalance = await usdtContract.methods.balanceOf(userAccount).call();
+                const usdtBalanceFormatted = (usdtBalance / 1e18).toFixed(2);
+                
+                // Update UI
+                document.getElementById('walletStatus').className = 'status-indicator status-active';
+                document.getElementById('walletAddress').textContent = userAccount;
+                document.getElementById('bnbBalance').textContent = parseFloat(bnbBalanceEth).toFixed(4);
+                document.getElementById('usdtBalance').textContent = usdtBalanceFormatted;
+                document.getElementById('walletInfo').style.display = 'block';
+                
+                btn.textContent = '✅ Connecté';
+                addLog('SUCCESS', `Wallet connecté: ${userAccount.substring(0, 10)}...`);
+                addLog('INFO', `Balance: ${parseFloat(bnbBalanceEth).toFixed(4)} BNB, ${usdtBalanceFormatted} USDT`);
+                
+                // Initialize router contract
+                routerContract = new web3.eth.Contract(ROUTER_ABI, PANCAKE_ROUTER);
+                selectDEX('pancakeswap');
                 
             } catch (error) {
-                console.error('Erreur:', error);
+                console.error('Error:', error);
                 addLog('ERROR', error.message);
-                alert('Erreur: ' + error.message);
-                connectBtn.disabled = false;
-                connectBtn.textContent = 'Connecter';
+                alert('❌ ' + error.message);
+                btn.disabled = false;
+                btn.textContent = '🔗 Connecter MetaMask';
             }
         }
 
-        function updateWalletUI(address, balance) {
-            document.getElementById('walletStatus').className = 'status-indicator status-active';
-            document.getElementById('walletAddress').textContent = 
-                address.substring(0, 10) + '...' + address.substring(address.length - 8);
-            document.getElementById('walletBalance').textContent = parseFloat(balance).toFixed(4);
-            document.getElementById('walletInfo').style.display = 'block';
-        }
-
-        function startPriceUpdates() {
-            updatePrice();
-            setInterval(updatePrice, 5000);
-        }
-
-        async function updatePrice() {
+        async function loadOnChainPrice() {
+            if (!web3 || !userAccount) {
+                alert('⚠️ Connectez d\'abord votre wallet!');
+                return;
+            }
+            
             try {
-                var pair = document.getElementById('tradingPair').value;
-                var response = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=' + pair);
+                addLog('INFO', 'Chargement du prix on-chain...');
                 
-                if (!response.ok) throw new Error('API error');
+                const token = document.getElementById('tokenSelect').value;
+                const quote = document.getElementById('quoteSelect').value;
                 
-                var data = await response.json();
-                currentPrice = parseFloat(data.lastPrice);
+                // Get token addresses
+                const tokenAddress = token === 'WBNB' ? WBNB_ADDRESS : 
+                                    token === 'USDT' ? USDT_ADDRESS : BUSD_ADDRESS;
+                const quoteAddress = quote === 'USDT' ? USDT_ADDRESS : 
+                                    quote === 'BUSD' ? BUSD_ADDRESS : WBNB_ADDRESS;
                 
-                document.getElementById('currentPrice').textContent = '$' + currentPrice.toFixed(2);
+                // Get price from PancakeSwap
+                const amountIn = web3.utils.toWei('1', 'ether');
+                const path = [tokenAddress, quoteAddress];
                 
-                var change = parseFloat(data.priceChangePercent);
-                var changeEl = document.getElementById('priceChange');
-                changeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
-                changeEl.className = 'price-change ' + (change >= 0 ? 'price-up' : 'price-down');
+                const amounts = await routerContract.methods.getAmountsOut(amountIn, path).call();
+                const priceOut = web3.utils.fromWei(amounts[1], 'ether');
                 
-                document.getElementById('high24h').textContent = '$' + parseFloat(data.highPrice).toFixed(2);
-                document.getElementById('low24h').textContent = '$' + parseFloat(data.lowPrice).toFixed(2);
+                currentOnchainPrice = parseFloat(priceOut);
                 
-                priceHistory.push(currentPrice);
-                if (priceHistory.length > 20) priceHistory.shift();
+                document.getElementById('onchainPrice').innerHTML = `
+                    <div style="font-size: 0.5em; color: #aaa;">Prix On-Chain</div>
+                    1 ${token} = ${currentOnchainPrice.toFixed(6)} ${quote}
+                `;
                 
-                updatePriceChart();
-                    
+                addLog('SUCCESS', `Prix chargé: 1 ${token} = ${currentOnchainPrice.toFixed(6)} ${quote}`);
+                
             } catch (error) {
-                var prices = {
-                    'BTCUSDT': 97234,
-                    'ETHUSDT': 3456,
-                    'BNBUSDT': 689
-                };
-                var pair = document.getElementById('tradingPair').value;
-                currentPrice = prices[pair] || 50000;
-                
-                document.getElementById('currentPrice').textContent = '$' + currentPrice.toFixed(2);
-                document.getElementById('high24h').textContent = '$' + (currentPrice * 1.02).toFixed(2);
-                document.getElementById('low24h').textContent = '$' + (currentPrice * 0.98).toFixed(2);
+                console.error('Error:', error);
+                addLog('ERROR', 'Erreur lors du chargement du prix: ' + error.message);
+                alert('❌ Erreur: ' + error.message);
             }
         }
 
-        function updatePriceChart() {
-            priceChart.data.labels = priceHistory.map(function(v, i) { return i; });
-            priceChart.data.datasets[0].data = priceHistory;
-            priceChart.update();
-        }
-
-        function startSentimentAnalysis() {
-            updateSentiment();
-            setInterval(updateSentiment, 10000);
-        }
-
-        function updateSentiment() {
-            sentimentScore = 40 + Math.random() * 40;
-            
-            document.getElementById('sentimentScore').textContent = Math.round(sentimentScore);
-            document.getElementById('twitterSentiment').textContent = Math.round(35 + Math.random() * 40);
-            document.getElementById('redditSentiment').textContent = Math.round(40 + Math.random() * 35);
-            
-            var sentimentBar = document.getElementById('sentimentBar');
-            sentimentBar.style.width = sentimentScore + '%';
-            
-            if (sentimentScore < 40) {
-                sentimentBar.textContent = 'BEARISH';
-                sentimentBar.style.background = '#ff0000';
-            } else if (sentimentScore > 65) {
-                sentimentBar.textContent = 'BULLISH';
-                sentimentBar.style.background = '#00ff00';
-            } else {
-                sentimentBar.textContent = 'NEUTRE';
-                sentimentBar.style.background = '#ffa500';
-            }
-        }
-
-        function startWhaleTracking() {
-            updateWhaleTracking();
-            setInterval(updateWhaleTracking, 15000);
-        }
-
-        function updateWhaleTracking() {
-            whaleCount = Math.floor(Math.random() * 8);
-            var whaleVolume = Math.floor(Math.random() * 5000000);
-            
-            document.getElementById('activeWhales').textContent = whaleCount;
-            document.getElementById('whaleVolume').textContent = '$' + whaleVolume;
-            
-            if (Math.random() > 0.7) {
-                var whaleAlerts = document.getElementById('whaleAlerts');
-                var alertDiv = document.createElement('div');
-                alertDiv.className = 'whale-alert';
-                var amount = (Math.random() * 1000 + 100).toFixed(2);
-                var action = Math.random() > 0.5 ? 'ACHAT' : 'VENTE';
-                alertDiv.innerHTML = 
-                    '<strong>Whale Alert!</strong><br>' +
-                    action + ' de ' + amount + ' BTC';
-                
-                whaleAlerts.insertBefore(alertDiv, whaleAlerts.firstChild);
-                
-                while (whaleAlerts.children.length > 5) {
-                    whaleAlerts.removeChild(whaleAlerts.lastChild);
-                }
-            }
-        }
-
-        function startArbitrageScanner() {
-            updateArbitrage();
-            setInterval(updateArbitrage, 12000);
-        }
-
-        function updateArbitrage() {
-            arbCount = Math.floor(Math.random() * 5);
-            var totalProfit = (arbCount * (Math.random() * 50 + 10)).toFixed(2);
-            
-            document.getElementById('arbOpportunities').textContent = arbCount;
-            document.getElementById('arbProfit').textContent = '$' + totalProfit;
-            
-            if (arbCount > 0 && Math.random() > 0.6) {
-                var arbList = document.getElementById('arbitrageList');
-                arbList.innerHTML = '';
-                
-                for (var i = 0; i < arbCount; i++) {
-                    var oppDiv = document.createElement('div');
-                    oppDiv.className = 'arbitrage-opportunity';
-                    var profit = (Math.random() * 2 + 0.5).toFixed(2);
-                    var dexes = ['PancakeSwap', 'Biswap', 'ApeSwap'];
-                    var dex1 = dexes[Math.floor(Math.random() * dexes.length)];
-                    var dex2 = dexes[Math.floor(Math.random() * dexes.length)];
-                    
-                    oppDiv.innerHTML = 
-                        '<div><strong>' + dex1 + ' vers ' + dex2 + '</strong></div>' +
-                        '<div class="opportunity-profit">+' + profit + '%</div>';
-                    
-                    arbList.appendChild(oppDiv);
-                }
-            }
-        }
-
-        function startBot() {
-            if (!userAccount) {
-                alert('Connectez votre wallet!');
+        function prepareTrade(type) {
+            if (!web3 || !userAccount) {
+                alert('⚠️ Connectez d\'abord votre wallet!');
                 return;
             }
             
-            var capital = parseFloat(document.getElementById('tradingCapital').value);
-            var tradeAmount = parseFloat(document.getElementById('tradeAmount').value);
-            
-            if (tradeAmount > capital) {
-                alert('Erreur: Le montant par trade ne peut pas depasser le capital total!');
+            if (!selectedDEX) {
+                alert('⚠️ Sélectionnez un DEX!');
                 return;
             }
             
-            if (tradeAmount > capital * 0.3) {
-                if (!confirm('ATTENTION: Vous utilisez ' + ((tradeAmount/capital)*100).toFixed(1) + '% de votre capital par trade. Cest risque! Continuer?')) {
-                    return;
-                }
-            }
-            
-            var strategy = document.getElementById('strategy').value;
-            var autoMode = document.getElementById('autoMode').checked;
-            
-            botActive = true;
-            tradingCapital = capital;
-            document.getElementById('startBotBtn').style.display = 'none';
-            document.getElementById('stopBotBtn').style.display = 'block';
-            
-            addLog('SUCCESS', 'Bot demarre - ' + strategy);
-            addLog('INFO', 'Capital: ' + capital + ' BNB');
-            addLog('INFO', 'Montant par trade: ' + tradeAmount + ' BNB');
-            
-            if (autoMode) {
-                addLog('WARNING', 'Mode automatique actif!');
-                startAutoTrading();
-            }
-        }
-
-        function stopBot() {
-            botActive = false;
-            document.getElementById('startBotBtn').style.display = 'block';
-            document.getElementById('stopBotBtn').style.display = 'none';
-            addLog('WARNING', 'Bot arrete');
-        }
-
-        function startAutoTrading() {
-            setInterval(function() {
-                if (!botActive) return;
-                
-                var strategy = document.getElementById('strategy').value;
-                var shouldTrade = false;
-                
-                if (strategy === 'sentiment' && sentimentScore > 70) {
-                    shouldTrade = true;
-                } else if (strategy === 'whale' && whaleCount > 5) {
-                    shouldTrade = true;
-                } else if (strategy === 'arbitrage' && arbCount > 2) {
-                    shouldTrade = true;
-                } else if (strategy === 'hybrid') {
-                    shouldTrade = (sentimentScore > 65 || whaleCount > 4);
-                } else if (strategy === 'ml' && Math.random() > 0.7) {
-                    shouldTrade = true;
-                }
-                
-                if (shouldTrade) {
-                    executeTrade();
-                }
-            }, 30000);
-        }
-
-        function executeTrade() {
-            var tradeAmount = parseFloat(document.getElementById('tradeAmount').value);
-            var capital = parseFloat(document.getElementById('tradingCapital').value);
-            
-            if (usedCapital + tradeAmount > capital) {
-                addLog('WARNING', 'Capital insuffisant pour ce trade!');
+            if (currentOnchainPrice === 0) {
+                alert('⚠️ Chargez d\'abord le prix on-chain!');
                 return;
             }
             
-            usedCapital += tradeAmount;
-            activeTrades++;
-            updateCapitalDisplay();
+            const amount = parseFloat(document.getElementById('tradeAmount').value);
+            const slippage = parseFloat(document.getElementById('slippage').value);
+            const token = document.getElementById('tokenSelect').value;
+            const quote = document.getElementById('quoteSelect').value;
+            const gasPrice = document.getElementById('gasPrice').value;
             
-            var isWin = Math.random() > 0.4;
-            var profitPercent = isWin ? (Math.random() * 3 + 0.5) : -(Math.random() * 2 + 0.3);
-            var profit = tradeAmount * (profitPercent / 100);
+            const expectedAmount = type === 'BUY' ? 
+                (amount / currentOnchainPrice).toFixed(6) : 
+                (amount * currentOnchainPrice).toFixed(6);
             
-            setTimeout(function() {
-                usedCapital -= tradeAmount;
-                activeTrades--;
-                
-                trades.total++;
-                if (isWin) {
-                    trades.winning++;
-                    trades.profit += profit;
-                    addLog('SUCCESS', 'Trade gagnant: +' + profit.toFixed(4) + ' BNB (+' + profitPercent.toFixed(2) + '%)');
-                } else {
-                    trades.losing++;
-                    trades.profit += profit;
-                    addLog('ERROR', 'Trade perdant: ' + profit.toFixed(4) + ' BNB (' + profitPercent.toFixed(2) + '%)');
-                }
-                
-                updatePerformanceStats();
-                updateCapitalDisplay();
-            }, 5000 + Math.random() * 10000);
+            const minReceived = type === 'BUY' ?
+                (expectedAmount * (1 - slippage / 100)).toFixed(6) :
+                (expectedAmount * (1 - slippage / 100)).toFixed(6);
+            
+            const gasCost = (gasPrice * 150000 / 1e9).toFixed(6); // Estimate 150k gas
+            
+            document.getElementById('tradeSummary').innerHTML = `
+                <div class="trade-summary-row">
+                    <strong>Vous recevez (estimé):</strong>
+                    <span>${expectedAmount} ${type === 'BUY' ? token : quote}</span>
+                </div>
+                <div class="trade-summary-row">
+                    <strong>Minimum garanti:</strong>
+                    <span style="color: #ffa500">${minReceived} ${type === 'BUY' ? token : quote}</span>
+                </div>
+                <div class="trade-summary-row">
+                    <strong>Prix on-chain:</strong>
+                    <span>${currentOnchainPrice.toFixed(6)}</span>
+                </div>
+                <div class="trade-summary-row">
+                    <strong>Slippage:</strong>
+                    <span>${slippage}%</span>
+                </div>
+                <div class="trade-summary-row">
+                    <strong>Gas estimé:</strong>
+                    <span style="color: #ff8c00">${gasCost} BNB (~${(gasCost * 600).toFixed(2)})</span>
+                </div>
+                <div class="trade-summary-row">
+                    <strong>DEX Fee:</strong>
+                    <span>0.25%</span>
+                </div>
+                <div class="trade-summary-row" style="border-top: 2px solid #00f5ff; margin-top: 10px; padding-top: 10px;">
+                    <strong style="font-size: 1.1em;">COÛT TOTAL:</strong>
+                    <span style="font-size: 1.1em; color: #00ff88">${(parseFloat(amount) + parseFloat(gasCost)).toFixed(6)} ${type === 'BUY' ? quote : token}</span>
+                </div>
+            `;
+            
+            document.getElementById('tradeModal').style.display = 'flex';
+            addLog('WARNING', `Préparation trade ${type}: ${amount} ${quote}`);
         }
 
-        function updatePerformanceStats() {
-            document.getElementById('winningTrades').textContent = trades.winning;
-            var winRate = trades.total > 0 ? (trades.winning / trades.total * 100).toFixed(1) : 0;
-            document.getElementById('winRate').textContent = winRate + '%';
-            document.getElementById('totalProfit').textContent = trades.profit.toFixed(4) + ' BNB';
+        function cancelTrade() {
+            document.getElementById('tradeModal').style.display = 'none';
+            addLog('INFO', 'Trade annulé');
+        }
+
+        async function executeBlockchainTrade() {
+            const confirmBtn = document.getElementById('confirmTradeBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = '⏳ Transaction en cours...';
             
-            var capital = parseFloat(document.getElementById('tradingCapital').value);
-            var roi = ((trades.profit / capital) * 100).toFixed(1);
-            document.getElementById('roi').textContent = roi + '%';
+            try {
+                const type = document.getElementById('buyBtn').textContent.includes('ACHETER') ? 'BUY' : 'SELL';
+                const amount = parseFloat(document.getElementById('tradeAmount').value);
+                const slippage = parseFloat(document.getElementById('slippage').value);
+                const gasPrice = document.getElementById('gasPrice').value;
+                
+                const token = document.getElementById('tokenSelect').value;
+                const quote = document.getElementById('quoteSelect').value;
+                
+                const tokenAddress = token === 'WBNB' ? WBNB_ADDRESS : 
+                                    token === 'USDT' ? USDT_ADDRESS : BUSD_ADDRESS;
+                const quoteAddress = quote === 'USDT' ? USDT_ADDRESS : 
+                                    quote === 'BUSD' ? BUSD_ADDRESS : WBNB_ADDRESS;
+                
+                addLog('INFO', '📝 Préparation de la transaction blockchain...');
+                
+                // Convert amount to Wei
+                const amountWei = web3.utils.toWei(amount.toString(), 'ether');
+                
+                // Calculate minimum amount out with slippage
+                const expectedOut = type === 'BUY' ? 
+                    (amount / currentOnchainPrice) : 
+                    (amount * currentOnchainPrice);
+                const minAmountOut = expectedOut * (1 - slippage / 100);
+                const minAmountOutWei = web3.utils.toWei(minAmountOut.toFixed(18), 'ether');
+                
+                // Set path
+                const path = type === 'BUY' ? 
+                    [quoteAddress, tokenAddress] : 
+                    [tokenAddress, quoteAddress];
+                
+                // Approve token first (if needed)
+                const tokenContract = new web3.eth.Contract(
+                    ERC20_ABI, 
+                    type === 'BUY' ? quoteAddress : tokenAddress
+                );
+                
+                addLog('INFO', '🔓 Approbation du token...');
+                
+                const approveTx = await tokenContract.methods.approve(
+                    PANCAKE_ROUTER,
+                    amountWei
+                ).send({
+                    from: userAccount,
+                    gasPrice: web3.utils.toWei(gasPrice, 'gwei')
+                });
+                
+                addLog('SUCCESS', `✅ Token approuvé! TX: ${approveTx.transactionHash.substring(0, 10)}...`);
+                
+                // Execute swap
+                addLog('INFO', '🔄 Exécution du swap...');
+                
+                const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes
+                
+                const swapTx = await routerContract.methods.swapExactTokensForTokens(
+                    amountWei,
+                    minAmountOutWei,
+                    path,
+                    userAccount,
+                    deadline
+                ).send({
+                    from: userAccount,
+                    gasPrice: web3.utils.toWei(gasPrice, 'gwei')
+                });
+                
+                addLog('SUCCESS', `🎉 SWAP RÉUSSI! TX Hash: ${swapTx.transactionHash}`);
+                
+                // Add to transaction history
+                addTransactionToHistory({
+                    type: type,
+                    amount: amount,
+                    pair: `${token}/${quote}`,
+                    hash: swapTx.transactionHash,
+                    timestamp: new Date().toLocaleString()
+                });
+                
+                // Update balances
+                setTimeout(() => connectWallet(), 3000);
+                
+                document.getElementById('tradeModal').style.display = 'none';
+                alert(`✅ Transaction réussie!\n\nTX: ${swapTx.transactionHash}\n\nVoir sur BSCScan: https://bscscan.com/tx/${swapTx.transactionHash}`);
+                
+            } catch (error) {
+                console.error('Transaction error:', error);
+                addLog('ERROR', '❌ Erreur transaction: ' + error.message);
+                alert('❌ Transaction échouée: ' + error.message);
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = '✅ CONFIRMER & SIGNER';
+            }
+        }
+
+        function addTransactionToHistory(tx) {
+            const historyDiv = document.getElementById('txHistory');
             
-            profitHistory.push(trades.profit);
-            if (profitHistory.length > 20) profitHistory.shift();
+            // Remove "no transactions" message
+            if (historyDiv.textContent.includes('Aucune transaction')) {
+                historyDiv.innerHTML = '';
+            }
             
-            profitChart.data.labels = profitHistory.map(function(v, i) { return i; });
-            profitChart.data.datasets[0].data = profitHistory;
-            profitChart.update();
+            const txCard = document.createElement('div');
+            txCard.className = 'pair-card';
+            txCard.style.flexDirection = 'column';
+            txCard.style.alignItems = 'flex-start';
+            
+            txCard.innerHTML = `
+                <div style="display: flex; justify-content: space-between; width: 100%;">
+                    <strong style="color: ${tx.type === 'BUY' ? '#00ff00' : '#ff0000'}">${tx.type}</strong>
+                    <span>${tx.pair}</span>
+                </div>
+                <div style="font-size: 0.85em; color: #aaa; margin-top: 5px;">
+                    ${tx.amount} | ${tx.timestamp}
+                </div>
+                <div style="font-size: 0.75em; color: #00f5ff; margin-top: 5px; word-break: break-all;">
+                    TX: ${tx.hash}
+                </div>
+                <a href="https://bscscan.com/tx/${tx.hash}" target="_blank" 
+                   style="color: #00ff88; font-size: 0.8em; margin-top: 5px; text-decoration: underline;">
+                    🔗 Voir sur BSCScan
+                </a>
+            `;
+            
+            historyDiv.insertBefore(txCard, historyDiv.firstChild);
         }
 
         function addLog(type, message) {
-            var logContainer = document.getElementById('logContainer');
-            var entry = document.createElement('div');
+            const logContainer = document.getElementById('logContainer');
+            const entry = document.createElement('div');
             entry.className = 'log-entry log-' + type.toLowerCase();
-            var time = new Date().toLocaleTimeString();
-            entry.textContent = '[' + time + '] [' + type + '] ' + message;
+            const time = new Date().toLocaleTimeString();
+            entry.textContent = `[${time}] [${type}] ${message}`;
             logContainer.insertBefore(entry, logContainer.firstChild);
             
             while (logContainer.children.length > 100) {
                 logContainer.removeChild(logContainer.lastChild);
             }
         }
+
+        // Update gas estimate periodically
+        setInterval(async () => {
+            if (web3) {
+                try {
+                    const gasPrice = await web3.eth.getGasPrice();
+                    const gasPriceGwei = web3.utils.fromWei(gasPrice, 'gwei');
+                    document.getElementById('gasPrice').value = Math.ceil(parseFloat(gasPriceGwei));
+                    
+                    const estimatedCost = (gasPriceGwei * 150000 / 1e9).toFixed(6);
+                    document.getElementById('gasEstimate').textContent = `~${estimatedCost} BNB`;
+                    document.getElementById('totalFees').textContent = `~${estimatedCost} BNB`;
+                } catch (error) {
+                    console.error('Gas price update error:', error);
+                }
+            }
+        }, 15000);
     </script>
 </body>
 </html>
+                    <strong>Type:</strong>
+                    <span style="color: ${type === 'BUY' ? '#00ff00' : '#ff0000'}; font-size: 1.2em;">${type}</span>
+                </div>
+                <div class="trade-summary-row">
+                    <strong>Paire:</strong>
+                    <span>${token}/${quote}</span>
+                </div>
+                <div class="trade-summary-row">
+                    <strong>Vous ${type === 'BUY' ? 'payez' : 'vendez'}:</strong>
+                    <span>${amount} ${type === 'BUY' ? quote : token}</span>
+                </div>
+                <div class="trade-summary-row">
