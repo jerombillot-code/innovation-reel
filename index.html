@@ -381,6 +381,13 @@
             <div class="card">
                 <h2>Configuration</h2>
                 <div class="input-group">
+                    <label>Capital de Trading (BNB)</label>
+                    <input type="number" id="tradingCapital" value="0.1" min="0.01" step="0.01">
+                    <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
+                        Capital disponible pour le trading automatique
+                    </div>
+                </div>
+                <div class="input-group">
                     <label>Strategie</label>
                     <select id="strategy">
                         <option value="manual">Manuel</option>
@@ -392,17 +399,38 @@
                     </select>
                 </div>
                 <div class="input-group">
-                    <label>Montant (BNB)</label>
+                    <label>Montant par Trade (BNB)</label>
                     <input type="number" id="tradeAmount" value="0.01" min="0.001" step="0.001">
+                    <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
+                        Montant investi par trade (max <span id="maxTradeAmount">10%</span> du capital)
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Risk Management</label>
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.85em;">Stop Loss (%)</label>
+                            <input type="number" id="stopLoss" value="2" min="0.5" max="10" step="0.5">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.85em;">Take Profit (%)</label>
+                            <input type="number" id="takeProfit" value="3" min="0.5" max="20" step="0.5">
+                        </div>
+                    </div>
                 </div>
                 <div class="input-group">
                     <label style="display: flex; align-items: center; justify-content: space-between;">
-                        <span>Auto</span>
+                        <span>Mode Automatique</span>
                         <label class="toggle-switch">
                             <input type="checkbox" id="autoMode">
                             <span class="slider"></span>
                         </label>
                     </label>
+                </div>
+                <div style="background: rgba(255,215,0,0.1); padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 0.85em;">
+                    <strong>Capital disponible:</strong> <span id="availableCapital">0.1</span> BNB<br>
+                    <strong>Capital utilise:</strong> <span id="usedCapital">0</span> BNB<br>
+                    <strong>Trades max simultanes:</strong> <span id="maxTrades">10</span>
                 </div>
                 <button class="btn" id="startBotBtn">Demarrer</button>
                 <button class="btn btn-danger" id="stopBotBtn" style="display: none;">Arreter</button>
@@ -456,6 +484,9 @@
         var profitChart;
         var whaleCount = 0;
         var arbCount = 0;
+        var tradingCapital = 0.1;
+        var usedCapital = 0;
+        var activeTrades = 0;
 
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
@@ -464,6 +495,7 @@
             startSentimentAnalysis();
             startWhaleTracking();
             startArbitrageScanner();
+            updateCapitalDisplay();
             addLog('INFO', 'Bot initialise');
         });
 
@@ -476,6 +508,34 @@
             document.getElementById('connectBtn').addEventListener('click', connectWallet);
             document.getElementById('startBotBtn').addEventListener('click', startBot);
             document.getElementById('stopBotBtn').addEventListener('click', stopBot);
+            
+            document.getElementById('tradingCapital').addEventListener('input', function() {
+                tradingCapital = parseFloat(this.value);
+                updateCapitalDisplay();
+            });
+            
+            document.getElementById('tradeAmount').addEventListener('input', function() {
+                updateCapitalDisplay();
+            });
+        }
+
+        function updateCapitalDisplay() {
+            var capital = parseFloat(document.getElementById('tradingCapital').value);
+            var tradeAmount = parseFloat(document.getElementById('tradeAmount').value);
+            var maxTrades = Math.floor(capital / tradeAmount);
+            var maxPercentage = ((tradeAmount / capital) * 100).toFixed(1);
+            
+            document.getElementById('availableCapital').textContent = (capital - usedCapital).toFixed(4);
+            document.getElementById('usedCapital').textContent = usedCapital.toFixed(4);
+            document.getElementById('maxTrades').textContent = maxTrades;
+            document.getElementById('maxTradeAmount').textContent = maxPercentage + '%';
+            
+            if (tradeAmount > capital * 0.2) {
+                document.getElementById('maxTradeAmount').style.color = '#ff0000';
+                document.getElementById('maxTradeAmount').textContent = maxPercentage + '% (RISQUE ELEVE!)';
+            } else {
+                document.getElementById('maxTradeAmount').style.color = '#00ff88';
+            }
         }
 
         function initCharts() {
@@ -733,16 +793,34 @@
                 return;
             }
             
+            var capital = parseFloat(document.getElementById('tradingCapital').value);
+            var tradeAmount = parseFloat(document.getElementById('tradeAmount').value);
+            
+            if (tradeAmount > capital) {
+                alert('Erreur: Le montant par trade ne peut pas depasser le capital total!');
+                return;
+            }
+            
+            if (tradeAmount > capital * 0.3) {
+                if (!confirm('ATTENTION: Vous utilisez ' + ((tradeAmount/capital)*100).toFixed(1) + '% de votre capital par trade. Cest risque! Continuer?')) {
+                    return;
+                }
+            }
+            
             var strategy = document.getElementById('strategy').value;
             var autoMode = document.getElementById('autoMode').checked;
             
             botActive = true;
+            tradingCapital = capital;
             document.getElementById('startBotBtn').style.display = 'none';
             document.getElementById('stopBotBtn').style.display = 'block';
             
             addLog('SUCCESS', 'Bot demarre - ' + strategy);
+            addLog('INFO', 'Capital: ' + capital + ' BNB');
+            addLog('INFO', 'Montant par trade: ' + tradeAmount + ' BNB');
             
             if (autoMode) {
+                addLog('WARNING', 'Mode automatique actif!');
                 startAutoTrading();
             }
         }
@@ -780,23 +858,40 @@
         }
 
         function executeTrade() {
-            var isWin = Math.random() > 0.4;
-            var profitPercent = isWin ? (Math.random() * 3 + 0.5) : -(Math.random() * 2 + 0.3);
-            var amount = parseFloat(document.getElementById('tradeAmount').value);
-            var profit = amount * (profitPercent / 100);
+            var tradeAmount = parseFloat(document.getElementById('tradeAmount').value);
+            var capital = parseFloat(document.getElementById('tradingCapital').value);
             
-            trades.total++;
-            if (isWin) {
-                trades.winning++;
-                trades.profit += profit;
-                addLog('SUCCESS', 'Trade gagnant: +' + profit.toFixed(4) + ' BNB');
-            } else {
-                trades.losing++;
-                trades.profit += profit;
-                addLog('ERROR', 'Trade perdant: ' + profit.toFixed(4) + ' BNB');
+            if (usedCapital + tradeAmount > capital) {
+                addLog('WARNING', 'Capital insuffisant pour ce trade!');
+                return;
             }
             
-            updatePerformanceStats();
+            usedCapital += tradeAmount;
+            activeTrades++;
+            updateCapitalDisplay();
+            
+            var isWin = Math.random() > 0.4;
+            var profitPercent = isWin ? (Math.random() * 3 + 0.5) : -(Math.random() * 2 + 0.3);
+            var profit = tradeAmount * (profitPercent / 100);
+            
+            setTimeout(function() {
+                usedCapital -= tradeAmount;
+                activeTrades--;
+                
+                trades.total++;
+                if (isWin) {
+                    trades.winning++;
+                    trades.profit += profit;
+                    addLog('SUCCESS', 'Trade gagnant: +' + profit.toFixed(4) + ' BNB (+' + profitPercent.toFixed(2) + '%)');
+                } else {
+                    trades.losing++;
+                    trades.profit += profit;
+                    addLog('ERROR', 'Trade perdant: ' + profit.toFixed(4) + ' BNB (' + profitPercent.toFixed(2) + '%)');
+                }
+                
+                updatePerformanceStats();
+                updateCapitalDisplay();
+            }, 5000 + Math.random() * 10000);
         }
 
         function updatePerformanceStats() {
@@ -805,8 +900,8 @@
             document.getElementById('winRate').textContent = winRate + '%';
             document.getElementById('totalProfit').textContent = trades.profit.toFixed(4) + ' BNB';
             
-            var initialCapital = 0.1;
-            var roi = ((trades.profit / initialCapital) * 100).toFixed(1);
+            var capital = parseFloat(document.getElementById('tradingCapital').value);
+            var roi = ((trades.profit / capital) * 100).toFixed(1);
             document.getElementById('roi').textContent = roi + '%';
             
             profitHistory.push(trades.profit);
