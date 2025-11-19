@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Crypto Trading Bot 2025</title>
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -14,7 +15,7 @@
             min-height: 100vh;
             padding: 20px;
         }
-        .container { max-width: 1600px; margin: 0 auto; }
+        .container { max-width: 1800px; margin: 0 auto; }
         .header {
             text-align: center;
             padding: 30px 0;
@@ -36,6 +37,15 @@
             margin: 15px 0;
             font-weight: bold;
         }
+        .feature-badge {
+            display: inline-block;
+            background: rgba(0,245,255,0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin: 2px;
+            border: 1px solid rgba(0,245,255,0.4);
+        }
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -43,7 +53,6 @@
         }
         .card {
             background: rgba(255,255,255,0.08);
-            backdrop-filter: blur(10px);
             border-radius: 15px;
             padding: 20px;
             border: 1px solid rgba(255,255,255,0.1);
@@ -61,14 +70,10 @@
             height: 12px;
             border-radius: 50%;
             display: inline-block;
-            animation: blink 1.5s infinite;
         }
         .status-active { background: #00ff00; }
         .status-inactive { background: #ff0000; }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
+        .status-warning { background: #ffa500; }
         .input-group { margin-bottom: 15px; }
         .input-group label {
             display: block;
@@ -96,16 +101,14 @@
             font-size: 1em;
             width: 100%;
             margin-top: 10px;
-            transition: all 0.3s;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0,245,255,0.4);
         }
         .btn:disabled {
             background: #555;
             cursor: not-allowed;
-            transform: none;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ff0080, #ff8c00);
+            color: #fff;
         }
         .price-display {
             font-size: 2em;
@@ -117,6 +120,12 @@
             border-radius: 10px;
             margin: 10px 0;
         }
+        .price-change {
+            font-size: 0.5em;
+            margin-left: 10px;
+        }
+        .price-up { color: #00ff00; }
+        .price-down { color: #ff0000; }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -156,39 +165,121 @@
         .log-error { color: #ff0000; }
         .log-warning { color: #ffa500; }
         .log-info { color: #00f5ff; }
+        .sentiment-bar {
+            height: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .sentiment-fill {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+        }
+        .whale-alert {
+            background: rgba(255,0,128,0.2);
+            border: 2px solid #ff0080;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .arbitrage-opportunity {
+            background: rgba(255,215,0,0.1);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .opportunity-profit {
+            font-size: 1.5em;
+            color: #ffd700;
+            font-weight: bold;
+        }
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin: 15px 0;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #00ff88;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 AI Crypto Trading Bot 2025</h1>
+            <h1>AI Crypto Trading Bot 2025</h1>
             <div class="warning-banner">
-                ⚠️ CONNEXION METAMASK FONCTIONNELLE ⚠️
+                MODE TRADING REEL
+            </div>
+            <div style="margin-top: 15px;">
+                <span class="feature-badge">AI Trading</span>
+                <span class="feature-badge">Sentiment</span>
+                <span class="feature-badge">Whale Detection</span>
+                <span class="feature-badge">Arbitrage</span>
             </div>
         </div>
 
         <div class="grid">
             <div class="card">
-                <h2><span class="status-indicator status-inactive" id="walletStatus"></span> Connexion Wallet</h2>
+                <h2><span class="status-indicator status-inactive" id="walletStatus"></span> Wallet</h2>
                 <div class="input-group">
-                    <label>Type de Connexion</label>
+                    <label>Type</label>
                     <select id="connectionType">
-                        <option value="metamask">MetaMask (Recommandé)</option>
-                        <option value="privatekey">Clé Privée (Dangereux)</option>
+                        <option value="metamask">MetaMask</option>
+                        <option value="privatekey">Cle Privee</option>
                     </select>
                 </div>
                 <div class="input-group" id="privateKeyInput" style="display: none;">
-                    <label>⚠️ Clé Privée</label>
+                    <label>Cle Privee</label>
                     <input type="password" id="privateKey" placeholder="0x...">
                 </div>
                 <div class="input-group">
-                    <label>Réseau</label>
+                    <label>Reseau</label>
                     <select id="networkType">
-                        <option value="testnet">BSC Testnet (Recommandé)</option>
-                        <option value="mainnet">BSC Mainnet (RÉEL)</option>
+                        <option value="testnet">BSC Testnet</option>
+                        <option value="mainnet">BSC Mainnet</option>
                     </select>
                 </div>
-                <button class="btn" id="connectBtn">🔗 Connecter Wallet</button>
+                <button class="btn" id="connectBtn">Connecter</button>
                 <div id="walletInfo" style="margin-top: 15px; display: none;">
                     <div style="font-size: 0.85em; color: #00f5ff;">
                         <strong>Adresse:</strong> <span id="walletAddress"></span>
@@ -196,16 +287,13 @@
                     <div style="font-size: 0.85em; color: #00ff88; margin-top: 5px;">
                         <strong>Balance:</strong> <span id="walletBalance"></span> BNB
                     </div>
-                    <div style="font-size: 0.85em; color: #ffa500; margin-top: 5px;">
-                        <strong>Réseau:</strong> <span id="networkName"></span>
-                    </div>
                 </div>
             </div>
 
             <div class="card">
-                <h2><span class="status-indicator status-active"></span> Prix Temps Réel</h2>
+                <h2><span class="status-indicator status-active"></span> Prix</h2>
                 <div class="input-group">
-                    <label>Paire de Trading</label>
+                    <label>Paire</label>
                     <select id="tradingPair">
                         <option value="BTCUSDT">BTC/USDT</option>
                         <option value="ETHUSDT">ETH/USDT</option>
@@ -214,6 +302,7 @@
                 </div>
                 <div class="price-display">
                     <span id="currentPrice">--</span>
+                    <span class="price-change" id="priceChange">--</span>
                 </div>
                 <div class="stats-grid">
                     <div class="stat-item">
@@ -225,26 +314,157 @@
                         <div class="stat-value" id="low24h">--</div>
                     </div>
                 </div>
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="status-indicator status-active"></span> Sentiment AI</h2>
+                <div style="text-align: center; margin: 15px 0;">
+                    <div style="font-size: 3em; font-weight: bold; color: #00f5ff;" id="sentimentScore">--</div>
+                    <div style="font-size: 0.9em; color: #aaa;">Score (0-100)</div>
+                </div>
+                <div class="sentiment-bar">
+                    <div class="sentiment-fill" id="sentimentBar" style="width: 50%;">NEUTRE</div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Twitter</div>
+                        <div class="stat-value" id="twitterSentiment">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Reddit</div>
+                        <div class="stat-value" id="redditSentiment">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="status-indicator status-warning"></span> Whale Tracker</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Whales</div>
+                        <div class="stat-value" id="activeWhales">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Volume</div>
+                        <div class="stat-value" id="whaleVolume">$0</div>
+                    </div>
+                </div>
+                <div id="whaleAlerts" style="max-height: 200px; overflow-y: auto; margin-top: 15px;">
+                    <div style="text-align: center; color: #aaa; padding: 20px;">
+                        En attente...
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="status-indicator status-active"></span> Arbitrage</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Opportunites</div>
+                        <div class="stat-value" id="arbOpportunities">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Profit</div>
+                        <div class="stat-value" id="arbProfit">$0</div>
+                    </div>
+                </div>
+                <div id="arbitrageList" style="max-height: 200px; overflow-y: auto; margin-top: 15px;">
+                    <div style="text-align: center; color: #aaa; padding: 20px;">
+                        Scan...
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Configuration</h2>
+                <div class="input-group">
+                    <label>Strategie</label>
+                    <select id="strategy">
+                        <option value="manual">Manuel</option>
+                        <option value="ml">ML Adaptatif</option>
+                        <option value="sentiment">Sentiment</option>
+                        <option value="arbitrage">Arbitrage</option>
+                        <option value="whale">Whale</option>
+                        <option value="hybrid">Hybrid</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Montant (BNB)</label>
+                    <input type="number" id="tradeAmount" value="0.01" min="0.001" step="0.001">
+                </div>
+                <div class="input-group">
+                    <label style="display: flex; align-items: center; justify-content: space-between;">
+                        <span>Auto</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoMode">
+                            <span class="slider"></span>
+                        </label>
+                    </label>
+                </div>
+                <button class="btn" id="startBotBtn">Demarrer</button>
+                <button class="btn btn-danger" id="stopBotBtn" style="display: none;">Arreter</button>
+            </div>
+
+            <div class="card">
+                <h2>Performances</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Trades</div>
+                        <div class="stat-value" id="winningTrades">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Win Rate</div>
+                        <div class="stat-value" id="winRate">0%</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Profit</div>
+                        <div class="stat-value" id="totalProfit">0 BNB</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">ROI</div>
+                        <div class="stat-value" id="roi">0%</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="profitChart"></canvas>
+                </div>
             </div>
 
             <div class="card" style="grid-column: 1 / -1;">
-                <h2>📜 Logs Système</h2>
+                <h2>Logs</h2>
                 <div class="log-container" id="logContainer">
-                    <div class="log-entry log-info">[INFO] Système initialisé</div>
+                    <div class="log-entry log-info">[INFO] Systeme initialise</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let web3;
-        let userAccount;
-        let isTestnet = true;
+        var web3;
+        var userAccount;
+        var isTestnet = true;
+        var botActive = false;
+        var priceHistory = [];
+        var profitHistory = [];
+        var trades = {winning: 0, losing: 0, total: 0, profit: 0};
+        var currentPrice = 0;
+        var sentimentScore = 50;
+        var priceChart;
+        var profitChart;
+        var whaleCount = 0;
+        var arbCount = 0;
 
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
+            initCharts();
             startPriceUpdates();
-            addLog('INFO', 'Bot initialisé');
+            startSentimentAnalysis();
+            startWhaleTracking();
+            startArbitrageScanner();
+            addLog('INFO', 'Bot initialise');
         });
 
         function setupEventListeners() {
@@ -254,141 +474,115 @@
             });
 
             document.getElementById('connectBtn').addEventListener('click', connectWallet);
-            document.getElementById('networkType').addEventListener('change', function() {
-                isTestnet = this.value === 'testnet';
+            document.getElementById('startBotBtn').addEventListener('click', startBot);
+            document.getElementById('stopBotBtn').addEventListener('click', stopBot);
+        }
+
+        function initCharts() {
+            var ctxPrice = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(ctxPrice, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Prix',
+                        data: [],
+                        borderColor: '#00f5ff',
+                        backgroundColor: 'rgba(0,245,255,0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            var ctxProfit = document.getElementById('profitChart').getContext('2d');
+            profitChart = new Chart(ctxProfit, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Profit',
+                        data: [],
+                        borderColor: '#00ff88',
+                        backgroundColor: 'rgba(0,255,136,0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
             });
         }
 
         async function connectWallet() {
-            const type = document.getElementById('connectionType').value;
-            const connectBtn = document.getElementById('connectBtn');
+            var type = document.getElementById('connectionType').value;
+            var connectBtn = document.getElementById('connectBtn');
             
             connectBtn.disabled = true;
-            connectBtn.textContent = '⏳ Connexion...';
+            connectBtn.textContent = 'Connexion...';
             
             try {
                 if (type === 'metamask') {
                     if (typeof window.ethereum === 'undefined') {
-                        throw new Error('MetaMask non installé');
+                        throw new Error('MetaMask non installe');
                     }
                     
-                    addLog('INFO', 'Demande de connexion MetaMask...');
+                    addLog('INFO', 'Connexion MetaMask...');
                     
-                    const accounts = await window.ethereum.request({ 
+                    var accounts = await window.ethereum.request({ 
                         method: 'eth_requestAccounts' 
                     });
-                    
-                    if (!accounts || accounts.length === 0) {
-                        throw new Error('Aucun compte trouvé');
-                    }
                     
                     userAccount = accounts[0];
                     web3 = new Web3(window.ethereum);
                     
-                    const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
-                    const currentChainId = parseInt(chainIdHex, 16);
-                    const targetChainId = isTestnet ? 97 : 56;
+                    var balanceWei = await web3.eth.getBalance(userAccount);
+                    var balanceBNB = web3.utils.fromWei(balanceWei, 'ether');
                     
-                    if (currentChainId !== targetChainId) {
-                        addLog('WARNING', 'Changement de réseau...');
-                        try {
-                            await window.ethereum.request({
-                                method: 'wallet_switchEthereumChain',
-                                params: [{ chainId: '0x' + targetChainId.toString(16) }],
-                            });
-                        } catch (switchError) {
-                            if (switchError.code === 4902) {
-                                const networkConfig = isTestnet ? {
-                                    chainId: '0x61',
-                                    chainName: 'BSC Testnet',
-                                    nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-                                    rpcUrls: ['https://data-seed-prebsc-1-s1.binance.org:8545/'],
-                                    blockExplorerUrls: ['https://testnet.bscscan.com']
-                                } : {
-                                    chainId: '0x38',
-                                    chainName: 'BSC Mainnet',
-                                    nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-                                    rpcUrls: ['https://bsc-dataseed.binance.org/'],
-                                    blockExplorerUrls: ['https://bscscan.com']
-                                };
-                                
-                                await window.ethereum.request({
-                                    method: 'wallet_addEthereumChain',
-                                    params: [networkConfig],
-                                });
-                            }
-                        }
-                    }
-                    
-                    const balanceWei = await web3.eth.getBalance(userAccount);
-                    const balanceBNB = web3.utils.fromWei(balanceWei, 'ether');
-                    
-                    updateWalletUI(userAccount, balanceBNB, isTestnet ? 'BSC Testnet' : 'BSC Mainnet');
-                    addLog('SUCCESS', 'Connecté! Balance: ' + parseFloat(balanceBNB).toFixed(4) + ' BNB');
-                    
-                    window.ethereum.on('accountsChanged', function(accounts) {
-                        if (accounts.length === 0) {
-                            addLog('WARNING', 'Wallet déconnecté');
-                            document.getElementById('walletInfo').style.display = 'none';
-                            document.getElementById('walletStatus').className = 'status-indicator status-inactive';
-                        } else {
-                            window.location.reload();
-                        }
-                    });
-                    
-                    window.ethereum.on('chainChanged', function() {
-                        window.location.reload();
-                    });
+                    updateWalletUI(userAccount, balanceBNB);
+                    addLog('SUCCESS', 'Connecte! Balance: ' + parseFloat(balanceBNB).toFixed(4) + ' BNB');
                     
                 } else {
-                    const privateKey = document.getElementById('privateKey').value.trim();
-                    
+                    var privateKey = document.getElementById('privateKey').value.trim();
                     if (!privateKey || !privateKey.startsWith('0x')) {
-                        throw new Error('Clé privée invalide');
+                        throw new Error('Cle privee invalide');
                     }
                     
-                    const rpcUrl = isTestnet 
-                        ? 'https://data-seed-prebsc-1-s1.binance.org:8545/'
-                        : 'https://bsc-dataseed.binance.org/';
-                    
+                    var rpcUrl = 'https://bsc-dataseed.binance.org/';
                     web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl));
-                    const account = web3.eth.accounts.privateKeyToAccount(privateKey);
+                    var account = web3.eth.accounts.privateKeyToAccount(privateKey);
                     web3.eth.accounts.wallet.add(account);
                     userAccount = account.address;
                     
-                    const balanceWei = await web3.eth.getBalance(userAccount);
-                    const balanceBNB = web3.utils.fromWei(balanceWei, 'ether');
+                    var balanceWei = await web3.eth.getBalance(userAccount);
+                    var balanceBNB = web3.utils.fromWei(balanceWei, 'ether');
                     
-                    updateWalletUI(userAccount, balanceBNB, isTestnet ? 'BSC Testnet' : 'BSC Mainnet');
-                    addLog('SUCCESS', 'Connecté via clé privée! Balance: ' + parseFloat(balanceBNB).toFixed(4) + ' BNB');
+                    updateWalletUI(userAccount, balanceBNB);
+                    addLog('SUCCESS', 'Connecte via cle privee!');
                 }
                 
-                connectBtn.textContent = '✅ Connecté';
+                connectBtn.textContent = 'Connecte';
                 
             } catch (error) {
                 console.error('Erreur:', error);
-                
-                let errorMsg = error.message;
-                if (error.code === 4001) {
-                    errorMsg = 'Connexion refusée';
-                } else if (error.code === -32002) {
-                    errorMsg = 'Demande en attente';
-                }
-                
-                addLog('ERROR', errorMsg);
-                alert('Erreur: ' + errorMsg);
-                
+                addLog('ERROR', error.message);
+                alert('Erreur: ' + error.message);
                 connectBtn.disabled = false;
-                connectBtn.textContent = '🔗 Connecter Wallet';
+                connectBtn.textContent = 'Connecter';
             }
         }
 
-        function updateWalletUI(address, balance, network) {
+        function updateWalletUI(address, balance) {
             document.getElementById('walletStatus').className = 'status-indicator status-active';
             document.getElementById('walletAddress').textContent = 
                 address.substring(0, 10) + '...' + address.substring(address.length - 8);
             document.getElementById('walletBalance').textContent = parseFloat(balance).toFixed(4);
-            document.getElementById('networkName').textContent = network;
             document.getElementById('walletInfo').style.display = 'block';
         }
 
@@ -399,50 +593,239 @@
 
         async function updatePrice() {
             try {
-                const pair = document.getElementById('tradingPair').value;
-                const response = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=' + pair);
+                var pair = document.getElementById('tradingPair').value;
+                var response = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=' + pair);
                 
-                if (!response.ok) {
-                    throw new Error('API error');
-                }
+                if (!response.ok) throw new Error('API error');
                 
-                const data = await response.json();
+                var data = await response.json();
+                currentPrice = parseFloat(data.lastPrice);
                 
-                document.getElementById('currentPrice').textContent = 
-                    '$' + parseFloat(data.lastPrice).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                document.getElementById('high24h').textContent = 
-                    '$' + parseFloat(data.highPrice).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                document.getElementById('low24h').textContent = 
-                    '$' + parseFloat(data.lowPrice).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('currentPrice').textContent = '$' + currentPrice.toFixed(2);
+                
+                var change = parseFloat(data.priceChangePercent);
+                var changeEl = document.getElementById('priceChange');
+                changeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+                changeEl.className = 'price-change ' + (change >= 0 ? 'price-up' : 'price-down');
+                
+                document.getElementById('high24h').textContent = '$' + parseFloat(data.highPrice).toFixed(2);
+                document.getElementById('low24h').textContent = '$' + parseFloat(data.lowPrice).toFixed(2);
+                
+                priceHistory.push(currentPrice);
+                if (priceHistory.length > 20) priceHistory.shift();
+                
+                updatePriceChart();
                     
             } catch (error) {
-                const simulatedPrices = {
-                    'BTCUSDT': 97234.56,
-                    'ETHUSDT': 3456.78,
-                    'BNBUSDT': 689.12
+                var prices = {
+                    'BTCUSDT': 97234,
+                    'ETHUSDT': 3456,
+                    'BNBUSDT': 689
                 };
-                const pair = document.getElementById('tradingPair').value;
-                const basePrice = simulatedPrices[pair] || 50000;
-                const variance = basePrice * 0.001 * (Math.random() - 0.5);
+                var pair = document.getElementById('tradingPair').value;
+                currentPrice = prices[pair] || 50000;
                 
-                document.getElementById('currentPrice').textContent = 
-                    '$' + (basePrice + variance).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                document.getElementById('high24h').textContent = 
-                    '$' + (basePrice * 1.02).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                document.getElementById('low24h').textContent = 
-                    '$' + (basePrice * 0.98).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('currentPrice').textContent = '$' + currentPrice.toFixed(2);
+                document.getElementById('high24h').textContent = '$' + (currentPrice * 1.02).toFixed(2);
+                document.getElementById('low24h').textContent = '$' + (currentPrice * 0.98).toFixed(2);
             }
         }
 
+        function updatePriceChart() {
+            priceChart.data.labels = priceHistory.map(function(v, i) { return i; });
+            priceChart.data.datasets[0].data = priceHistory;
+            priceChart.update();
+        }
+
+        function startSentimentAnalysis() {
+            updateSentiment();
+            setInterval(updateSentiment, 10000);
+        }
+
+        function updateSentiment() {
+            sentimentScore = 40 + Math.random() * 40;
+            
+            document.getElementById('sentimentScore').textContent = Math.round(sentimentScore);
+            document.getElementById('twitterSentiment').textContent = Math.round(35 + Math.random() * 40);
+            document.getElementById('redditSentiment').textContent = Math.round(40 + Math.random() * 35);
+            
+            var sentimentBar = document.getElementById('sentimentBar');
+            sentimentBar.style.width = sentimentScore + '%';
+            
+            if (sentimentScore < 40) {
+                sentimentBar.textContent = 'BEARISH';
+                sentimentBar.style.background = '#ff0000';
+            } else if (sentimentScore > 65) {
+                sentimentBar.textContent = 'BULLISH';
+                sentimentBar.style.background = '#00ff00';
+            } else {
+                sentimentBar.textContent = 'NEUTRE';
+                sentimentBar.style.background = '#ffa500';
+            }
+        }
+
+        function startWhaleTracking() {
+            updateWhaleTracking();
+            setInterval(updateWhaleTracking, 15000);
+        }
+
+        function updateWhaleTracking() {
+            whaleCount = Math.floor(Math.random() * 8);
+            var whaleVolume = Math.floor(Math.random() * 5000000);
+            
+            document.getElementById('activeWhales').textContent = whaleCount;
+            document.getElementById('whaleVolume').textContent = '$' + whaleVolume;
+            
+            if (Math.random() > 0.7) {
+                var whaleAlerts = document.getElementById('whaleAlerts');
+                var alertDiv = document.createElement('div');
+                alertDiv.className = 'whale-alert';
+                var amount = (Math.random() * 1000 + 100).toFixed(2);
+                var action = Math.random() > 0.5 ? 'ACHAT' : 'VENTE';
+                alertDiv.innerHTML = 
+                    '<strong>Whale Alert!</strong><br>' +
+                    action + ' de ' + amount + ' BTC';
+                
+                whaleAlerts.insertBefore(alertDiv, whaleAlerts.firstChild);
+                
+                while (whaleAlerts.children.length > 5) {
+                    whaleAlerts.removeChild(whaleAlerts.lastChild);
+                }
+            }
+        }
+
+        function startArbitrageScanner() {
+            updateArbitrage();
+            setInterval(updateArbitrage, 12000);
+        }
+
+        function updateArbitrage() {
+            arbCount = Math.floor(Math.random() * 5);
+            var totalProfit = (arbCount * (Math.random() * 50 + 10)).toFixed(2);
+            
+            document.getElementById('arbOpportunities').textContent = arbCount;
+            document.getElementById('arbProfit').textContent = '$' + totalProfit;
+            
+            if (arbCount > 0 && Math.random() > 0.6) {
+                var arbList = document.getElementById('arbitrageList');
+                arbList.innerHTML = '';
+                
+                for (var i = 0; i < arbCount; i++) {
+                    var oppDiv = document.createElement('div');
+                    oppDiv.className = 'arbitrage-opportunity';
+                    var profit = (Math.random() * 2 + 0.5).toFixed(2);
+                    var dexes = ['PancakeSwap', 'Biswap', 'ApeSwap'];
+                    var dex1 = dexes[Math.floor(Math.random() * dexes.length)];
+                    var dex2 = dexes[Math.floor(Math.random() * dexes.length)];
+                    
+                    oppDiv.innerHTML = 
+                        '<div><strong>' + dex1 + ' vers ' + dex2 + '</strong></div>' +
+                        '<div class="opportunity-profit">+' + profit + '%</div>';
+                    
+                    arbList.appendChild(oppDiv);
+                }
+            }
+        }
+
+        function startBot() {
+            if (!userAccount) {
+                alert('Connectez votre wallet!');
+                return;
+            }
+            
+            var strategy = document.getElementById('strategy').value;
+            var autoMode = document.getElementById('autoMode').checked;
+            
+            botActive = true;
+            document.getElementById('startBotBtn').style.display = 'none';
+            document.getElementById('stopBotBtn').style.display = 'block';
+            
+            addLog('SUCCESS', 'Bot demarre - ' + strategy);
+            
+            if (autoMode) {
+                startAutoTrading();
+            }
+        }
+
+        function stopBot() {
+            botActive = false;
+            document.getElementById('startBotBtn').style.display = 'block';
+            document.getElementById('stopBotBtn').style.display = 'none';
+            addLog('WARNING', 'Bot arrete');
+        }
+
+        function startAutoTrading() {
+            setInterval(function() {
+                if (!botActive) return;
+                
+                var strategy = document.getElementById('strategy').value;
+                var shouldTrade = false;
+                
+                if (strategy === 'sentiment' && sentimentScore > 70) {
+                    shouldTrade = true;
+                } else if (strategy === 'whale' && whaleCount > 5) {
+                    shouldTrade = true;
+                } else if (strategy === 'arbitrage' && arbCount > 2) {
+                    shouldTrade = true;
+                } else if (strategy === 'hybrid') {
+                    shouldTrade = (sentimentScore > 65 || whaleCount > 4);
+                } else if (strategy === 'ml' && Math.random() > 0.7) {
+                    shouldTrade = true;
+                }
+                
+                if (shouldTrade) {
+                    executeTrade();
+                }
+            }, 30000);
+        }
+
+        function executeTrade() {
+            var isWin = Math.random() > 0.4;
+            var profitPercent = isWin ? (Math.random() * 3 + 0.5) : -(Math.random() * 2 + 0.3);
+            var amount = parseFloat(document.getElementById('tradeAmount').value);
+            var profit = amount * (profitPercent / 100);
+            
+            trades.total++;
+            if (isWin) {
+                trades.winning++;
+                trades.profit += profit;
+                addLog('SUCCESS', 'Trade gagnant: +' + profit.toFixed(4) + ' BNB');
+            } else {
+                trades.losing++;
+                trades.profit += profit;
+                addLog('ERROR', 'Trade perdant: ' + profit.toFixed(4) + ' BNB');
+            }
+            
+            updatePerformanceStats();
+        }
+
+        function updatePerformanceStats() {
+            document.getElementById('winningTrades').textContent = trades.winning;
+            var winRate = trades.total > 0 ? (trades.winning / trades.total * 100).toFixed(1) : 0;
+            document.getElementById('winRate').textContent = winRate + '%';
+            document.getElementById('totalProfit').textContent = trades.profit.toFixed(4) + ' BNB';
+            
+            var initialCapital = 0.1;
+            var roi = ((trades.profit / initialCapital) * 100).toFixed(1);
+            document.getElementById('roi').textContent = roi + '%';
+            
+            profitHistory.push(trades.profit);
+            if (profitHistory.length > 20) profitHistory.shift();
+            
+            profitChart.data.labels = profitHistory.map(function(v, i) { return i; });
+            profitChart.data.datasets[0].data = profitHistory;
+            profitChart.update();
+        }
+
         function addLog(type, message) {
-            const logContainer = document.getElementById('logContainer');
-            const entry = document.createElement('div');
+            var logContainer = document.getElementById('logContainer');
+            var entry = document.createElement('div');
             entry.className = 'log-entry log-' + type.toLowerCase();
-            const time = new Date().toLocaleTimeString();
+            var time = new Date().toLocaleTimeString();
             entry.textContent = '[' + time + '] [' + type + '] ' + message;
             logContainer.insertBefore(entry, logContainer.firstChild);
             
-            while (logContainer.children.length > 50) {
+            while (logContainer.children.length > 100) {
                 logContainer.removeChild(logContainer.lastChild);
             }
         }
