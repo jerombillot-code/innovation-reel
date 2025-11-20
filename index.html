@@ -556,31 +556,90 @@
 
             <div class="card">
                 <h2>🎮 Actions Trading</h2>
-                <button class="btn" id="buyBtn" disabled>🟢 ACHETER (BNB → Token)</button>
-                <button class="btn btn-danger" id="sellBtn" disabled>🔴 VENDRE (Token → BNB)</button>
-                <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                    <div style="font-size: 0.85em; color: #aaa;">Estimation:</div>
-                    <div style="font-size: 0.9em; margin-top: 5px;">
-                        <strong>Montant:</strong> <span id="estAmount">--</span><br>
-                        <strong>Gas:</strong> <span id="estGas">--</span><br>
-                        <strong>Total:</strong> <span id="estTotal">--</span>
+                
+                <!-- MODE MANUEL -->
+                <div id="manualTradingSection">
+                    <div style="background: rgba(0,245,255,0.1); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(0,245,255,0.3);">
+                        <div style="font-size: 0.95em; font-weight: bold; color: #00f5ff; margin-bottom: 8px;">
+                            📱 TRADING MANUEL
+                        </div>
+                        <div style="font-size: 0.85em; color: #aaa;">
+                            Effectuez des achats/ventes en cliquant sur les boutons ci-dessous
+                        </div>
+                    </div>
+                    
+                    <button class="btn" id="buyBtn" disabled>🟢 ACHETER (BNB → Token)</button>
+                    <button class="btn btn-danger" id="sellBtn" disabled>🔴 VENDRE (Token → BNB)</button>
+                    
+                    <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <div style="font-size: 0.85em; color: #aaa;">Estimation:</div>
+                        <div style="font-size: 0.9em; margin-top: 5px;">
+                            <strong>Montant:</strong> <span id="estAmount">--</span><br>
+                            <strong>Gas:</strong> <span id="estGas">--</span><br>
+                            <strong>Total:</strong> <span id="estTotal">--</span>
+                        </div>
                     </div>
                 </div>
                 
-                <div style="margin: 20px 0; padding: 15px; background: rgba(0,255,136,0.1); border-radius: 10px; border: 2px solid rgba(0,255,136,0.3);">
-                    <div style="font-size: 1em; font-weight: bold; color: #00ff88; margin-bottom: 10px; text-align: center;">
-                        🤖 CONTRÔLE DU BOT
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn" id="startBotBtn" disabled style="flex: 1; background: linear-gradient(135deg, #00ff88, #00f5ff);">
-                            ▶️ DÉMARRER BOT
-                        </button>
-                        <button class="btn btn-danger" id="stopBotBtn" disabled style="flex: 1; display: none;">
-                            ⏹️ ARRÊTER BOT
-                        </button>
-                    </div>
-                    <div id="botStatusText" style="margin-top: 10px; text-align: center; font-size: 0.85em; color: #aaa;">
-                        Mode auto désactivé avec MetaMask
+                <div style="margin: 20px 0; border-top: 2px solid rgba(255,255,255,0.1);"></div>
+                
+                <!-- MODE AUTOMATIQUE -->
+                <div id="autoBotSection">
+                    <div style="background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,245,255,0.15)); padding: 15px; border-radius: 10px; border: 2px solid rgba(0,255,136,0.4); margin-bottom: 0;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                            <div style="font-size: 1.1em; font-weight: bold; color: #00ff88;">
+                                🤖 BOT AUTOMATIQUE
+                            </div>
+                            <div style="font-size: 1.5em;">⚡</div>
+                        </div>
+                        
+                        <div style="font-size: 0.85em; color: #aaa; margin-bottom: 12px; line-height: 1.5;">
+                            Le bot analyse le marché en temps réel et exécute automatiquement des trades selon votre stratégie.
+                        </div>
+                        
+                        <!-- Checklist de prérequis -->
+                        <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                            <div style="font-size: 0.9em; font-weight: bold; color: #00f5ff; margin-bottom: 8px;">
+                                ✓ Prérequis:
+                            </div>
+                            <div style="font-size: 0.85em; line-height: 1.8;">
+                                <div id="checkWallet" style="color: #ff0000;">❌ Wallet connecté avec clé privée</div>
+                                <div id="checkAutoMode" style="color: #ff0000;">❌ Mode Auto activé dans Configuration</div>
+                                <div id="checkStrategy" style="color: #00ff88;">✅ Stratégie sélectionnée</div>
+                                <div id="checkAmount" style="color: #00ff88;">✅ Montant par trade configuré</div>
+                            </div>
+                        </div>
+                        
+                        <!-- État actuel -->
+                        <div id="botCurrentState" style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                            <div style="font-size: 0.9em; font-weight: bold; color: #ffa500; margin-bottom: 5px;">
+                                📊 État actuel:
+                            </div>
+                            <div id="botStateText" style="font-size: 0.85em; color: #aaa;">
+                                En attente de configuration...
+                            </div>
+                        </div>
+                        
+                        <!-- Boutons de contrôle -->
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn" id="startBotBtn" disabled style="flex: 1; background: linear-gradient(135deg, #00ff88, #00f5ff); font-size: 1em; padding: 15px;">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <span style="font-size: 1.2em;">▶️</span>
+                                    <span>DÉMARRER LE BOT</span>
+                                </div>
+                            </button>
+                            <button class="btn btn-danger" id="stopBotBtn" disabled style="flex: 1; font-size: 1em; padding: 15px; display: none;">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <span style="font-size: 1.2em;">⏹️</span>
+                                    <span>ARRÊTER LE BOT</span>
+                                </div>
+                            </button>
+                        </div>
+                        
+                        <!-- Aide -->
+                        <div style="margin-top: 12px; font-size: 0.75em; color: #aaa; text-align: center; line-height: 1.5;">
+                            💡 Astuce: Utilisez <code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 3px;">Ctrl+Q</code> pour arrêt d'urgence
+                        </div>
                     </div>
                 </div>
             </div>
@@ -694,6 +753,52 @@
                 tokenPriceHistory = [];
                 updateTokenChart();
             });
+            
+            document.getElementById('autoMode').addEventListener('change', updateBotChecklist);
+            document.getElementById('strategy').addEventListener('change', updateBotChecklist);
+            document.getElementById('tradeAmount').addEventListener('input', updateBotChecklist);
+        }
+        
+        function updateBotChecklist() {
+            const isWalletConnected = userAccount && !isMetaMask;
+            const isAutoModeEnabled = document.getElementById('autoMode').checked;
+            const hasStrategy = document.getElementById('strategy').value !== '';
+            const hasAmount = parseFloat(document.getElementById('tradeAmount').value) > 0;
+            
+            document.getElementById('checkWallet').innerHTML = isWalletConnected 
+                ? '<span style="color: #00ff88;">✅ Wallet connecté avec clé privée</span>'
+                : '<span style="color: #ff0000;">❌ Wallet connecté avec clé privée</span>';
+            
+            document.getElementById('checkAutoMode').innerHTML = isAutoModeEnabled 
+                ? '<span style="color: #00ff88;">✅ Mode Auto activé dans Configuration</span>'
+                : '<span style="color: #ff0000;">❌ Mode Auto activé dans Configuration</span>';
+            
+            document.getElementById('checkStrategy').innerHTML = hasStrategy 
+                ? '<span style="color: #00ff88;">✅ Stratégie sélectionnée</span>'
+                : '<span style="color: #ffa500;">⚠️ Stratégie sélectionnée</span>';
+            
+            document.getElementById('checkAmount').innerHTML = hasAmount 
+                ? '<span style="color: #00ff88;">✅ Montant par trade configuré</span>'
+                : '<span style="color: #ffa500;">⚠️ Montant par trade configuré</span>';
+            
+            const allReady = isWalletConnected && isAutoModeEnabled && hasStrategy && hasAmount;
+            
+            if (!userAccount) {
+                document.getElementById('botStateText').innerHTML = '<span style="color: #ff0000;">❌ Veuillez d\'abord connecter votre wallet</span>';
+                document.getElementById('startBotBtn').disabled = true;
+            } else if (isMetaMask) {
+                document.getElementById('botStateText').innerHTML = '<span style="color: #ffa500;">⚠️ Mode automatique non disponible avec MetaMask</span>';
+                document.getElementById('startBotBtn').disabled = true;
+            } else if (!isAutoModeEnabled) {
+                document.getElementById('botStateText').innerHTML = '<span style="color: #ffa500;">⚠️ Activez le mode Auto dans la configuration</span>';
+                document.getElementById('startBotBtn').disabled = true;
+            } else if (allReady) {
+                document.getElementById('botStateText').innerHTML = '<span style="color: #00ff88;">✅ Prêt à démarrer! Tous les prérequis sont remplis</span>';
+                document.getElementById('startBotBtn').disabled = false;
+            } else {
+                document.getElementById('botStateText').innerHTML = '<span style="color: #ffa500;">⚠️ Complétez tous les prérequis ci-dessus</span>';
+                document.getElementById('startBotBtn').disabled = true;
+            }
         }
 
         function initCharts() {
@@ -848,10 +953,10 @@
                     document.getElementById('sellBtn').disabled = false;
                     document.getElementById('startBotBtn').disabled = true;
                     document.getElementById('connectBtn').textContent = '✅ Connecté';
-                    
-                    document.getElementById('botStatusText').innerHTML = '<span style="color: #ffa500;">⚠️ Mode auto non disponible avec MetaMask</span>';
 
                     trades.initialCapital = parseFloat(balanceBNB);
+                    
+                    updateBotChecklist();
 
                     addLog('SUCCESS', `MetaMask connecté: ${userAccount.substring(0, 10)}...`);
                     addLog('SUCCESS', `Balance: ${parseFloat(balanceBNB).toFixed(4)} BNB`);
@@ -907,10 +1012,10 @@
                     document.getElementById('sellBtn').disabled = false;
                     document.getElementById('startBotBtn').disabled = false;
                     document.getElementById('connectBtn').textContent = '✅ Connecté';
-                    
-                    document.getElementById('botStatusText').innerHTML = '<span style="color: #00ff88;">✅ Prêt à démarrer le bot automatique</span>';
 
                     trades.initialCapital = parseFloat(balanceBNB);
+                    
+                    updateBotChecklist();
 
                     addLog('SUCCESS', `Wallet connecté: ${userAccount.substring(0, 10)}...`);
                     addLog('SUCCESS', `Balance: ${parseFloat(balanceBNB).toFixed(4)} BNB`);
@@ -1296,12 +1401,18 @@
             }
             
             if (!document.getElementById('autoMode').checked) {
-                alert('❌ Activez le mode auto dans la configuration!');
+                alert('❌ Activez le mode auto dans la configuration!\n\nAllez dans Configuration → Mode Auto → Activez le switch');
                 addLog('WARNING', 'Mode auto non activé');
                 return;
             }
 
-            if (!confirm('⚠️ ATTENTION!\n\nLe bot va effectuer des VRAIES transactions automatiques sur BSC Mainnet.\n\n💰 Fonds réels en jeu\n🤖 Trading automatique\n⚡ Sans validation manuelle\n\nÊtes-vous sûr de vouloir continuer?')) {
+            if (!confirm('⚠️ ATTENTION - DÉMARRAGE DU BOT!\n\n' +
+                '🤖 Le bot va effectuer des VRAIES transactions automatiques\n' +
+                '💰 Vos fonds réels seront utilisés\n' +
+                '⚡ Trading automatique sans validation manuelle\n' +
+                '📊 Stratégie: ' + document.getElementById('strategy').options[document.getElementById('strategy').selectedIndex].text + '\n' +
+                '💵 Montant par trade: ' + document.getElementById('tradeAmount').value + ' BNB\n\n' +
+                'Êtes-vous sûr de vouloir continuer?')) {
                 addLog('INFO', 'Démarrage du bot annulé par l\'utilisateur');
                 return;
             }
@@ -1326,7 +1437,7 @@
             document.getElementById('buyBtn').disabled = true;
             document.getElementById('sellBtn').disabled = true;
             
-            document.getElementById('botStatusText').innerHTML = '<span style="color: #00ff00;">✅ Bot actif - Trading automatique en cours</span>';
+            document.getElementById('botStateText').innerHTML = '<span style="color: #00ff00; font-weight: bold;">🚀 Bot actif - Trading automatique en cours</span>';
             
             addLog('SUCCESS', '🤖 ═══════════════════════════════════');
             addLog('SUCCESS', '🤖 BOT DÉMARRÉ - MODE AUTOMATIQUE ACTIVÉ');
@@ -1367,13 +1478,15 @@
                 document.getElementById('sellBtn').disabled = false;
             }
             
-            document.getElementById('botStatusText').innerHTML = '<span style="color: #aaa;">Bot arrêté - Prêt à redémarrer</span>';
+            document.getElementById('botStateText').innerHTML = '<span style="color: #00ff88;">✅ Bot arrêté - Prêt à redémarrer</span>';
             
             addLog('WARNING', '⏹️ ═══════════════════════════════════');
             addLog('WARNING', '⏹️ BOT ARRÊTÉ');
             addLog('INFO', `📊 Total trades: ${trades.total}`);
             addLog('INFO', `💰 Profit/Perte: ${trades.profit.toFixed(6)} BNB`);
             addLog('WARNING', '⏹️ ═══════════════════════════════════');
+            
+            updateBotChecklist();
         }
 
         function startBotUptimeCounter() {
