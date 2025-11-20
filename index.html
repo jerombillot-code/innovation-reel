@@ -379,26 +379,30 @@
             </div>
 
             <div class="card">
-                <h2><span class="status-indicator status-warning"></span> Whale Tracker</h2>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-label">Whales Actifs</div>
-                        <div class="stat-value" id="activeWhales">--</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Volume 1h</div>
-                        <div class="stat-value" id="whaleVolume">$--</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Achats/Ventes</div>
-                        <div class="stat-value" id="whaleBuySell">--/--</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Signal</div>
-                        <div class="stat-value" id="whaleSignal">--</div>
-                    </div>
+                <h2><span class="status-indicator status-active"></span> Graphique Token</h2>
+                <div style="margin-bottom: 10px; font-size: 0.9em; color: #00f5ff;">
+                    <strong id="chartTokenName">Token sélectionné</strong>
                 </div>
-                <div id="whaleAlerts" style="max-height: 200px; overflow-y: auto; margin-top: 15px;">
+                <div style="position: relative; height: 300px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden;">
+                    <canvas id="tokenChart"></canvas>
+                </div>
+                <div class="stats-grid" style="margin-top: 15px;">
+                    <div class="stat-item">
+                        <div class="stat-label">Prix Moyen</div>
+                        <div class="stat-value" id="avgPrice">$--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">24h Change</div>
+                        <div class="stat-value" id="change24h">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Volume</div>
+                        <div class="stat-value" id="volumeToken">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Trend</div>
+                        <div class="stat-value" id="trendToken">--</div>
+                    </div>
                 </div>
             </div>
 
@@ -572,16 +576,16 @@
 
     <script>
         let web3, userAccount, botActive = false;
-        let priceHistory = [], profitHistory = [];
+        let priceHistory = [], profitHistory = [], tokenPriceHistory = [];
         let trades = {winning: 0, losing: 0, total: 0, profit: 0, initialCapital: 0};
-        let priceChart, profitChart, priceUpdateInterval;
+        let priceChart, profitChart, tokenChart, priceUpdateInterval;
         let isMetaMask = false;
         let activeTrades = [];
         let botStartTime = null;
         let botUptimeInterval = null;
         
         let sentimentScore = 50;
-        let whaleCount = 0, whaleBuys = 0, whaleSells = 0;
+        let whaleBuys = 0, whaleSells = 0;
         let arbOpportunities = 0;
         let supportLevel = 0, resistanceLevel = 0;
         let trendStrength = 0, momentum = 0;
@@ -610,7 +614,6 @@
             initCharts();
             startPriceUpdates();
             startSentimentAnalysis();
-            startWhaleTracking();
             startArbitrageScanner();
             startTechnicalAnalysis();
             addLog('INFO', 'Système prêt - Tous les indicateurs actifs');
@@ -629,6 +632,10 @@
             document.getElementById('startBotBtn').addEventListener('click', startBot);
             document.getElementById('stopBotBtn').addEventListener('click', stopBot);
             document.getElementById('tradingPair').addEventListener('change', updatePrice);
+            document.getElementById('tokenAddress').addEventListener('change', function() {
+                tokenPriceHistory = [];
+                updateTokenChart();
+            });
         }
 
         function initCharts() {
@@ -667,6 +674,49 @@
                         borderColor: '#00ff88',
                         backgroundColor: 'rgba(0,255,136,0.1)',
                         tension: 0.4
+                    }]
+                }
+            });
+
+            tokenChart = new Chart(document.getElementById('tokenChart').getContext('2d'), {
+                type: 'line',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '$' + context.parsed.y.toFixed(6);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            ticks: { 
+                                color: '#fff',
+                                callback: function(value) {
+                                    return '$' + value.toFixed(6);
+                                }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        x: { 
+                            ticks: { color: '#fff' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                },
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        borderColor: '#ffd700',
+                        backgroundColor: 'rgba(255,215,0,0.1)',
+                        tension: 0.4,
+                        fill: true
                     }]
                 }
             });
@@ -1300,10 +1350,10 @@
                 }
                 
                 else if (strategy === 'whale_following') {
-                    if (whaleBuys > whaleSells + 2 && whaleCount > 5) {
+                    if (whaleBuys > whaleSells + 2) {
                         shouldBuy = true;
                         addLog('INFO', `🐋 Whales achètent: ${whaleBuys} achats vs ${whaleSells} ventes`);
-                    } else if (whaleSells > whaleBuys + 2 && whaleCount > 5) {
+                    } else if (whaleSells > whaleBuys + 2) {
                         shouldSell = true;
                         addLog('INFO', `🐋 Whales vendent: ${whaleSells} ventes vs ${whaleBuys} achats`);
                     }
@@ -1384,6 +1434,90 @@
         function startSentimentAnalysis() {
             updateSentiment();
             setInterval(updateSentiment, 15000);
+            updateTokenChart();
+            setInterval(updateTokenChart, 10000);
+        }
+
+        async function updateTokenChart() {
+            try {
+                const tokenAddress = document.getElementById('tokenAddress').value;
+                const tokenSelect = document.getElementById('tokenAddress');
+                const tokenName = tokenSelect.options[tokenSelect.selectedIndex].text;
+                
+                document.getElementById('chartTokenName').textContent = tokenName;
+
+                if (!web3) {
+                    document.getElementById('avgPrice').textContent = '--';
+                    document.getElementById('change24h').textContent = '--';
+                    document.getElementById('volumeToken').textContent = '--';
+                    document.getElementById('trendToken').textContent = 'Connectez wallet';
+                    return;
+                }
+
+                const routerABI = [
+                    {"inputs":[{"internalType":"uint256","name":"amountIn","type":"uint256"},{"internalType":"address[]","name":"path","type":"address[]"}],"name":"getAmountsOut","outputs":[{"internalType":"uint256[]","name":"amounts","type":"uint256[]"}],"stateMutability":"view","type":"function"}
+                ];
+
+                const router = new web3.eth.Contract(routerABI, PANCAKE_ROUTER);
+                const amountIn = web3.utils.toWei('1', 'ether');
+                const path = [WBNB, tokenAddress];
+
+                const amounts = await router.methods.getAmountsOut(amountIn, path).call();
+                const tokenPrice = parseFloat(web3.utils.fromWei(amounts[1], 'ether'));
+                
+                const bnbPrice = parseFloat(document.getElementById('tradingPair').value === 'BNBUSDT' ? 
+                    document.getElementById('currentPrice').textContent.replace('$', '') : 689);
+                
+                const tokenPriceUSD = tokenPrice * bnbPrice;
+
+                tokenPriceHistory.push(tokenPriceUSD);
+                if (tokenPriceHistory.length > 50) tokenPriceHistory.shift();
+
+                const now = new Date();
+                const timeLabel = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+                
+                tokenChart.data.labels.push(timeLabel);
+                if (tokenChart.data.labels.length > 50) tokenChart.data.labels.shift();
+                
+                tokenChart.data.datasets[0].data = tokenPriceHistory;
+                tokenChart.update('none');
+
+                if (tokenPriceHistory.length > 1) {
+                    const avgPrice = tokenPriceHistory.reduce((a, b) => a + b) / tokenPriceHistory.length;
+                    document.getElementById('avgPrice').textContent = '$' + avgPrice.toFixed(8);
+
+                    const firstPrice = tokenPriceHistory[0];
+                    const lastPrice = tokenPriceHistory[tokenPriceHistory.length - 1];
+                    const change24h = ((lastPrice - firstPrice) / firstPrice) * 100;
+                    
+                    const change24hEl = document.getElementById('change24h');
+                    change24hEl.textContent = (change24h >= 0 ? '+' : '') + change24h.toFixed(2) + '%';
+                    change24hEl.style.color = change24h >= 0 ? '#00ff00' : '#ff0000';
+
+                    const volume = tokenPriceHistory.reduce((a, b) => a + b) * 1000;
+                    document.getElementById('volumeToken').textContent = '$' + (volume / 1000000).toFixed(2) + 'M';
+
+                    const trend = change24h > 2 ? '📈 HAUSSIER' : change24h < -2 ? '📉 BAISSIER' : '➡️ STABLE';
+                    const trendColor = change24h > 2 ? '#00ff00' : change24h < -2 ? '#ff0000' : '#ffa500';
+                    
+                    const trendEl = document.getElementById('trendToken');
+                    trendEl.textContent = trend;
+                    trendEl.style.color = trendColor;
+
+                    if (tokenPriceHistory.length === 1) {
+                        addLog('SUCCESS', `Prix ${tokenName} chargé: $${tokenPriceUSD.toFixed(8)}`);
+                    }
+                }
+
+            } catch (error) {
+                document.getElementById('avgPrice').textContent = '--';
+                document.getElementById('change24h').textContent = '--';
+                document.getElementById('volumeToken').textContent = '--';
+                
+                const trendEl = document.getElementById('trendToken');
+                trendEl.textContent = 'Non disponible';
+                trendEl.style.color = '#aaa';
+            }
         }
 
         function updateSentiment() {
@@ -1418,136 +1552,6 @@
             } else {
                 sentimentBar.textContent = 'EXTREME BULLISH';
                 sentimentBar.style.background = '#00ff00';
-            }
-        }
-
-        function startWhaleTracking() {
-            updateWhaleTracking();
-            setInterval(updateWhaleTracking, 30000);
-        }
-
-        async function updateWhaleTracking() {
-            try {
-                const pair = document.getElementById('tradingPair').value;
-                let tokenAddress = WBNB;
-                
-                const tokenMap = {
-                    'BTCUSDT': '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c',
-                    'ETHUSDT': '0x2170Ed0880ac9A755fd29B2688956BD959F933F8',
-                    'BNBUSDT': WBNB,
-                    'ADAUSDT': '0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47',
-                    'SOLUSDT': '0x570A5D26f7765Ecb712C0924E4De545B89fD43dF'
-                };
-                
-                tokenAddress = tokenMap[pair] || WBNB;
-                
-                if (web3) {
-                    const latestBlock = await web3.eth.getBlockNumber();
-                    const startBlock = latestBlock - 50;
-                    
-                    let largeTxCount = 0;
-                    let totalVolume = 0;
-                    let buyCount = 0;
-                    let sellCount = 0;
-                    
-                    const whaleAlerts = document.getElementById('whaleAlerts');
-                    
-                    for (let blockNum = startBlock; blockNum <= latestBlock; blockNum += 5) {
-                        try {
-                            const block = await web3.eth.getBlock(blockNum, true);
-                            
-                            if (block && block.transactions) {
-                                for (const tx of block.transactions) {
-                                    if (tx.to === PANCAKE_ROUTER || tx.to === tokenAddress) {
-                                        const valueInBNB = parseFloat(web3.utils.fromWei(tx.value || '0', 'ether'));
-                                        
-                                        if (valueInBNB > 10) {
-                                            largeTxCount++;
-                                            totalVolume += valueInBNB;
-                                            
-                                            if (tx.to === PANCAKE_ROUTER) {
-                                                buyCount++;
-                                                
-                                                const alertDiv = document.createElement('div');
-                                                alertDiv.className = 'whale-alert';
-                                                alertDiv.innerHTML = `
-                                                    <div style="display: flex; justify-content: space-between;">
-                                                        <strong style="color: #00ff00">🐋 ACHAT RÉEL</strong>
-                                                        <span>${valueInBNB.toFixed(2)} BNB</span>
-                                                    </div>
-                                                    <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
-                                                        Block: ${blockNum}<br>
-                                                        TX: ${tx.hash.substring(0, 20)}...
-                                                    </div>
-                                                `;
-                                                
-                                                whaleAlerts.insertBefore(alertDiv, whaleAlerts.firstChild);
-                                                
-                                                addLog('INFO', `🐋 Whale ACHAT détecté: ${valueInBNB.toFixed(2)} BNB (Block ${blockNum})`);
-                                            } else {
-                                                sellCount++;
-                                            }
-                                            
-                                            while (whaleAlerts.children.length > 10) {
-                                                whaleAlerts.removeChild(whaleAlerts.lastChild);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } catch (blockError) {
-                            continue;
-                        }
-                    }
-                    
-                    whaleCount = largeTxCount;
-                    whaleBuys = buyCount;
-                    whaleSells = sellCount;
-                    
-                    document.getElementById('activeWhales').textContent = whaleCount;
-                    document.getElementById('whaleVolume').textContent = `$${(totalVolume * 600).toFixed(0)}`;
-                    document.getElementById('whaleBuySell').textContent = buyCount + '/' + sellCount;
-                    
-                    let whaleSignal = 'NEUTRE';
-                    let signalColor = '#ffa500';
-                    if (buyCount > sellCount + 2) {
-                        whaleSignal = 'ACHAT';
-                        signalColor = '#00ff00';
-                    } else if (sellCount > buyCount + 2) {
-                        whaleSignal = 'VENTE';
-                        signalColor = '#ff0000';
-                    }
-                    
-                    const signalEl = document.getElementById('whaleSignal');
-                    signalEl.textContent = whaleSignal;
-                    signalEl.style.color = signalColor;
-                    
-                    if (whaleCount > 0) {
-                        addLog('SUCCESS', `✅ ${whaleCount} whales détectés (${buyCount} achats, ${sellCount} ventes)`);
-                    }
-                    
-                } else {
-                    whaleCount = 0;
-                    whaleBuys = 0;
-                    whaleSells = 0;
-                    
-                    document.getElementById('activeWhales').textContent = '--';
-                    document.getElementById('whaleVolume').textContent = '$--';
-                    document.getElementById('whaleBuySell').textContent = '--/--';
-                    
-                    const signalEl = document.getElementById('whaleSignal');
-                    signalEl.textContent = '--';
-                    signalEl.style.color = '#aaa';
-                    
-                    const whaleAlerts = document.getElementById('whaleAlerts');
-                    if (whaleAlerts.children.length === 0) {
-                        whaleAlerts.innerHTML = '<div style="text-align: center; color: #aaa; padding: 20px;">Connectez votre wallet pour voir les transactions whale réelles</div>';
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Erreur whale tracking:', error);
-                addLog('WARNING', 'Erreur whale tracking - mode simulation activé');
             }
         }
 
