@@ -679,112 +679,58 @@
 
             try {
                 if (connectionType === 'metamask') {
-                    // Vérifier si MetaMask est installé
-                    if (!window.ethereum) {
-                        throw new Error('MetaMask non détecté! Installez MetaMask depuis metamask.io');
+                    if (typeof window.ethereum === 'undefined') {
+                        throw new Error('MetaMask non installé! Installez MetaMask depuis metamask.io');
                     }
 
-                    addLog('INFO', '🦊 Demande de connexion MetaMask...');
+                    addLog('INFO', 'Connexion MetaMask...');
 
-                    // Demander les comptes
-                    let accounts;
-                    try {
-                        accounts = await window.ethereum.request({ 
-                            method: 'eth_requestAccounts' 
-                        });
-                    } catch (err) {
-                        if (err.code === 4001) {
-                            throw new Error('Connexion refusée par l\'utilisateur');
-                        }
-                        throw new Error('Erreur de connexion: ' + err.message);
-                    }
-                    
-                    if (!accounts || accounts.length === 0) {
-                        throw new Error('Aucun compte disponible dans MetaMask');
-                    }
+                    // IMPORTANT: await est nécessaire
+                    const accounts = await window.ethereum.request({ 
+                        method: 'eth_requestAccounts' 
+                    });
                     
                     userAccount = accounts[0];
-                    addLog('SUCCESS', `Compte: ${userAccount.substring(0, 10)}...`);
-
-                    // Initialiser Web3
                     web3 = new Web3(window.ethereum);
                     isMetaMask = true;
 
                     // Vérifier le réseau
-                    let currentChainId;
-                    try {
-                        currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
-                    } catch (e) {
-                        addLog('WARNING', 'Impossible de vérifier le réseau');
-                        currentChainId = '0x38'; // Assumer BSC
-                    }
-                    
-                    addLog('INFO', `ChainID actuel: ${currentChainId}`);
-                    
-                    // Si pas sur BSC (0x38 = 56 en décimal)
-                    if (currentChainId !== '0x38') {
-                        addLog('WARNING', '⚠️ Changement vers BSC Mainnet nécessaire...');
+                    const chainId = await web3.eth.getChainId();
+                    if (chainId !== 56n && chainId !== 56) {
+                        addLog('WARNING', 'Réseau incorrect détecté');
                         
                         try {
-                            // Essayer de changer vers BSC
                             await window.ethereum.request({
                                 method: 'wallet_switchEthereumChain',
                                 params: [{ chainId: '0x38' }],
                             });
-                            addLog('SUCCESS', '✅ Basculé vers BSC Mainnet');
-                            
-                            // Attendre un peu que le changement soit effectif
-                            await new Promise(resolve => setTimeout(resolve, 1000));
-                            
+                            addLog('SUCCESS', 'Changement vers BSC Mainnet réussi');
                         } catch (switchError) {
-                            // Si BSC n'est pas dans MetaMask, l'ajouter
                             if (switchError.code === 4902) {
-                                addLog('INFO', 'Ajout du réseau BSC...');
-                                try {
-                                    await window.ethereum.request({
-                                        method: 'wallet_addEthereumChain',
-                                        params: [{
-                                            chainId: '0x38',
-                                            chainName: 'BNB Smart Chain',
-                                            nativeCurrency: {
-                                                name: 'BNB',
-                                                symbol: 'BNB',
-                                                decimals: 18
-                                            },
-                                            rpcUrls: ['https://bsc-dataseed1.binance.org'],
-                                            blockExplorerUrls: ['https://bscscan.com']
-                                        }]
-                                    });
-                                    addLog('SUCCESS', '✅ BSC Mainnet ajouté');
-                                    
-                                    // Attendre que l'ajout soit effectif
-                                    await new Promise(resolve => setTimeout(resolve, 1500));
-                                    
-                                } catch (addError) {
-                                    throw new Error('Impossible d\'ajouter BSC Mainnet');
-                                }
-                            } else if (switchError.code === 4001) {
-                                throw new Error('Changement de réseau refusé - Changez manuellement vers BSC');
+                                await window.ethereum.request({
+                                    method: 'wallet_addEthereumChain',
+                                    params: [{
+                                        chainId: '0x38',
+                                        chainName: 'Binance Smart Chain Mainnet',
+                                        nativeCurrency: {
+                                            name: 'BNB',
+                                            symbol: 'BNB',
+                                            decimals: 18
+                                        },
+                                        rpcUrls: ['https://bsc-dataseed1.binance.org'],
+                                        blockExplorerUrls: ['https://bscscan.com']
+                                    }]
+                                });
+                                addLog('SUCCESS', 'BSC Mainnet ajouté à MetaMask');
                             } else {
-                                addLog('WARNING', 'Erreur changement réseau: ' + switchError.message);
+                                throw switchError;
                             }
                         }
                     }
 
-                    // Récupérer la balance
-                    addLog('INFO', 'Récupération de la balance...');
-                    let balance;
-                    try {
-                        balance = await web3.eth.getBalance(userAccount);
-                    } catch (balErr) {
-                        addLog('WARNING', 'Erreur balance, réessai...');
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                        balance = await web3.eth.getBalance(userAccount);
-                    }
-                    
+                    const balance = await web3.eth.getBalance(userAccount);
                     const balanceBNB = web3.utils.fromWei(balance, 'ether');
 
-                    // Mettre à jour l'interface
                     document.getElementById('walletStatus').className = 'status-indicator status-active';
                     document.getElementById('walletAddress').textContent = 
                         userAccount.substring(0, 10) + '...' + userAccount.substring(38);
@@ -796,42 +742,29 @@
                     document.getElementById('sellBtn').disabled = false;
                     document.getElementById('startBotBtn').disabled = true;
                     document.getElementById('connectBtn').textContent = '✅ Connecté';
-                    document.getElementById('connectBtn').style.background = 'linear-gradient(135deg, #00ff00, #00cc00)';
 
                     trades.initialCapital = parseFloat(balanceBNB);
 
-                    addLog('SUCCESS', '🎉 MetaMask connecté avec succès!');
-                    addLog('SUCCESS', `💰 Balance: ${parseFloat(balanceBNB).toFixed(4)} BNB`);
-                    addLog('INFO', '✅ Prêt à trader - Validez les transactions dans MetaMask');
+                    addLog('SUCCESS', `MetaMask connecté: ${userAccount.substring(0, 10)}...`);
+                    addLog('SUCCESS', `Balance: ${parseFloat(balanceBNB).toFixed(4)} BNB`);
+                    addLog('INFO', 'Mode manuel - Vous validerez chaque transaction dans MetaMask');
 
-                    // Nettoyer les anciens listeners
-                    try {
-                        if (window.ethereum.removeListener) {
-                            window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-                            window.ethereum.removeListener('chainChanged', handleChainChanged);
-                        }
-                    } catch(e) {}
-
-                    // Ajouter les listeners
-                    const handleAccountsChanged = (accounts) => {
+                    window.ethereum.on('accountsChanged', function (accounts) {
                         if (accounts.length === 0) {
-                            addLog('WARNING', '⚠️ MetaMask déconnecté');
-                            setTimeout(() => location.reload(), 2000);
-                        } else if (accounts[0] !== userAccount) {
+                            addLog('WARNING', 'MetaMask déconnecté');
+                            location.reload();
+                        } else {
                             userAccount = accounts[0];
-                            addLog('INFO', '🔄 Compte changé: ' + userAccount.substring(0, 10) + '...');
+                            addLog('INFO', 'Compte changé: ' + userAccount.substring(0, 10) + '...');
                             updateBalance();
                         }
-                    };
-                    
-                    const handleChainChanged = (chainId) => {
-                        addLog('INFO', '🔄 Réseau changé, rechargement...');
-                        setTimeout(() => location.reload(), 1500);
-                    };
-                    
-                    window.ethereum.on('accountsChanged', handleAccountsChanged);
-                    window.ethereum.on('chainChanged', handleChainChanged);
-                    
+                    });
+
+                    window.ethereum.on('chainChanged', function(chainId) {
+                        addLog('INFO', 'Réseau changé - Rechargement...');
+                        location.reload();
+                    });
+
                 } else {
                     const privateKey = document.getElementById('privateKey').value.trim();
                     
