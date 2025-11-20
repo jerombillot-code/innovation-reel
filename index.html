@@ -657,11 +657,6 @@
                             </button>
                         </div>
                         
-                        <!-- Bouton de test DEBUG - À RETIRER EN PRODUCTION -->
-                        <button onclick="console.log('Test clic direct'); alert('Bouton cliqué!'); startBot();" style="margin-top: 10px; padding: 10px; background: #ff00ff; color: #fff; border: none; border-radius: 5px; width: 100%; cursor: pointer; font-weight: bold;">
-                            🔧 TEST DEBUG - FORCER DÉMARRAGE
-                        </button>
-                        
                         <!-- Aide -->
                         <div style="margin-top: 12px; font-size: 0.75em; color: #aaa; text-align: center; line-height: 1.5;">
                             💡 Astuce: Utilisez <code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 3px;">Ctrl+Q</code> pour arrêt d'urgence
@@ -837,22 +832,24 @@
             
             console.log('allReady:', allReady);
             
+            // Logique simplifiée - on active dès que wallet + mode auto
             if (!userAccount) {
                 document.getElementById('botStateText').innerHTML = '<span style="color: #ff0000;">❌ Veuillez d\'abord connecter votre wallet</span>';
                 document.getElementById('startBotBtn').disabled = true;
+                console.log('Bouton DÉSACTIVÉ - pas de wallet');
             } else if (isMetaMask) {
                 document.getElementById('botStateText').innerHTML = '<span style="color: #ffa500;">⚠️ Mode automatique non disponible avec MetaMask</span>';
                 document.getElementById('startBotBtn').disabled = true;
+                console.log('Bouton DÉSACTIVÉ - MetaMask');
             } else if (!isAutoModeEnabled) {
                 document.getElementById('botStateText').innerHTML = '<span style="color: #ffa500;">⚠️ Activez le mode Auto dans la configuration</span>';
-                document.getElementById('startBotBtn').disabled = true;
-            } else if (allReady) {
-                document.getElementById('botStateText').innerHTML = '<span style="color: #00ff88;">✅ Prêt à démarrer! Tous les prérequis sont remplis</span>';
-                document.getElementById('startBotBtn').disabled = false;
-                console.log('Bouton ACTIVÉ');
+                document.getElementById('startBotBtn').disabled = false; // On active quand même, startBot() fera la vraie vérif
+                console.log('Bouton ACTIVÉ (mais mode auto désactivé)');
             } else {
-                document.getElementById('botStateText').innerHTML = '<span style="color: #ffa500;">⚠️ Complétez tous les prérequis ci-dessus</span>';
-                document.getElementById('startBotBtn').disabled = true;
+                // Wallet connecté + Mode auto activé = on active le bouton
+                document.getElementById('botStateText').innerHTML = '<span style="color: #00ff88;">✅ Prêt à démarrer! Cliquez sur le bouton ci-dessous</span>';
+                document.getElementById('startBotBtn').disabled = false;
+                console.log('Bouton ACTIVÉ - Prêt!');
             }
         }
 
@@ -1065,12 +1062,17 @@
 
                     document.getElementById('buyBtn').disabled = false;
                     document.getElementById('sellBtn').disabled = false;
-                    document.getElementById('startBotBtn').disabled = false;
                     document.getElementById('connectBtn').textContent = '✅ Connecté';
 
                     trades.initialCapital = parseFloat(balanceBNB);
                     
-                    updateBotChecklist();
+                    // Forcer l'état initial du bouton startBot
+                    console.log('Connexion clé privée OK, mise à jour du bouton bot...');
+                    document.getElementById('startBotBtn').disabled = false;
+                    
+                    setTimeout(() => {
+                        updateBotChecklist();
+                    }, 100);
 
                     addLog('SUCCESS', `Wallet connecté: ${userAccount.substring(0, 10)}...`);
                     addLog('SUCCESS', `Balance: ${parseFloat(balanceBNB).toFixed(4)} BNB`);
