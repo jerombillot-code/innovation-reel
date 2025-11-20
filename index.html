@@ -249,6 +249,26 @@
                 ⚠️ MODE TRADING RÉEL - TRANSACTIONS BLOCKCHAIN RÉELLES ⚠️
             </div>
             
+            <div style="margin: 15px auto; max-width: 600px; padding: 15px; background: linear-gradient(135deg, rgba(0,255,136,0.2), rgba(0,245,255,0.2)); border-radius: 15px; border: 2px solid #00ff88; box-shadow: 0 0 30px rgba(0,255,136,0.3);">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                    <div style="font-size: 2em;">🐱</div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.3em; font-weight: bold; color: #00ff88; text-shadow: 0 0 10px #00ff88;">
+                            JERCAT TOKEN
+                        </div>
+                        <div style="font-size: 0.85em; color: #aaa; margin-top: 3px;">
+                            Le token officiel de ce bot
+                        </div>
+                    </div>
+                    <div style="font-size: 2em;">🚀</div>
+                </div>
+                <div style="margin-top: 10px; text-align: center;">
+                    <a href="https://dex-jercat.vercel.app/" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #00ff88, #00f5ff); color: #000; text-decoration: none; padding: 8px 20px; border-radius: 8px; font-weight: bold; font-size: 0.9em; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(0,255,136,0.4);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        🔗 ACHETER JERCAT SUR NOTRE DEX
+                    </a>
+                </div>
+            </div>
+            
             <div id="botStatusBanner" style="margin: 15px auto; max-width: 700px; padding: 20px; background: rgba(0,255,136,0.15); border-radius: 15px; border: 2px solid #00ff88; display: none; box-shadow: 0 0 30px rgba(0,255,136,0.3);">
                 <div style="display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap;">
                     <div style="display: flex; align-items: center; gap: 12px;">
@@ -271,6 +291,7 @@
             </div>
             
             <div style="margin-top: 15px;">
+                <span class="feature-badge" style="background: linear-gradient(135deg, rgba(0,255,136,0.3), rgba(0,245,255,0.3)); border: 2px solid #00ff88; animation: pulse 2s infinite;">🐱 JERCAT TOKEN</span>
                 <span class="feature-badge">🔴 LIVE</span>
                 <span class="feature-badge">Binance API</span>
                 <span class="feature-badge">PancakeSwap V2</span>
@@ -468,22 +489,31 @@
                 <div class="input-group">
                     <label>Token à Trader (BSC)</label>
                     <select id="tokenAddress">
-                        <option value="0x197CF8951d93325A9333857Ee5330daF7aC4bcCF">JERCAT 🐱 (Recommandé)</option>
+                        <option value="0x197CF8951d93325A9333857Ee5330daF7aC4bcCF" selected>🐱 JERCAT (Recommandé)</option>
                         <option value="0x55d398326f99059fF775485246999027B3197955">USDT</option>
                         <option value="0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56">BUSD</option>
                         <option value="0x2170Ed0880ac9A755fd29B2688956BD959F933F8">ETH</option>
                         <option value="0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c">BTCB</option>
                     </select>
                 </div>
-                <div style="margin-top: 10px; padding: 10px; background: rgba(0,255,136,0.1); border-radius: 8px; border: 1px solid rgba(0,255,136,0.3);">
-                    <div style="font-size: 0.85em; color: #00ff88;">
-                        <strong>🐱 JERCAT Token</strong>
+                <div style="margin-top: 10px; padding: 15px; background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,245,255,0.15)); border-radius: 10px; border: 2px solid rgba(0,255,136,0.4); box-shadow: 0 0 20px rgba(0,255,136,0.2);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <div style="font-size: 1.1em; color: #00ff88; font-weight: bold;">
+                            🐱 JERCAT TOKEN
+                        </div>
+                        <div style="font-size: 1.3em;">
+                            🚀
+                        </div>
                     </div>
-                    <div style="font-size: 0.75em; color: #aaa; margin-top: 5px;">
-                        Contrat: 0x197C...cCF<br>
-                        <a href="https://dex-jercat.vercel.app/" target="_blank" style="color: #00f5ff; text-decoration: none;">
-                            🔗 Acheter sur DEX JERCAT →
-                        </a>
+                    <div style="font-size: 0.8em; color: #aaa; margin-bottom: 8px;">
+                        <strong style="color: #00f5ff;">Contrat BSC:</strong><br>
+                        <code style="background: rgba(0,0,0,0.3); padding: 3px 6px; border-radius: 4px; font-size: 0.85em;">0x197CF8951d93325A9333857Ee5330daF7aC4bcCF</code>
+                    </div>
+                    <a href="https://dex-jercat.vercel.app/" target="_blank" style="display: block; text-align: center; background: linear-gradient(135deg, #00ff88, #00f5ff); color: #000; text-decoration: none; padding: 10px; border-radius: 8px; font-weight: bold; margin-top: 10px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,255,136,0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,255,136,0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0,255,136,0.3)'">
+                        🔗 ACHETER SUR DEX JERCAT →
+                    </a>
+                    <div style="margin-top: 8px; text-align: center; font-size: 0.75em; color: #aaa;">
+                        Trade directement sur notre DEX officiel
                     </div>
                 </div>
                 <div class="input-group">
@@ -536,8 +566,23 @@
                         <strong>Total:</strong> <span id="estTotal">--</span>
                     </div>
                 </div>
-                <button class="btn" id="startBotBtn" disabled>🤖 Démarrer Bot</button>
-                <button class="btn btn-danger" id="stopBotBtn" style="display: none;">⏹️ Arrêter Bot</button>
+                
+                <div style="margin: 20px 0; padding: 15px; background: rgba(0,255,136,0.1); border-radius: 10px; border: 2px solid rgba(0,255,136,0.3);">
+                    <div style="font-size: 1em; font-weight: bold; color: #00ff88; margin-bottom: 10px; text-align: center;">
+                        🤖 CONTRÔLE DU BOT
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" id="startBotBtn" disabled style="flex: 1; background: linear-gradient(135deg, #00ff88, #00f5ff);">
+                            ▶️ DÉMARRER BOT
+                        </button>
+                        <button class="btn btn-danger" id="stopBotBtn" disabled style="flex: 1; display: none;">
+                            ⏹️ ARRÊTER BOT
+                        </button>
+                    </div>
+                    <div id="botStatusText" style="margin-top: 10px; text-align: center; font-size: 0.85em; color: #aaa;">
+                        Mode auto désactivé avec MetaMask
+                    </div>
+                </div>
             </div>
 
             <div class="card">
@@ -608,6 +653,16 @@
         ];
 
         document.addEventListener('DOMContentLoaded', init);
+        
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'q') {
+                e.preventDefault();
+                if (botActive) {
+                    addLog('WARNING', '🚨 ARRÊT D\'URGENCE activé (Ctrl+Q)');
+                    stopBot();
+                }
+            }
+        });
 
         function init() {
             setupEventListeners();
@@ -616,6 +671,9 @@
             startSentimentAnalysis();
             startArbitrageScanner();
             startTechnicalAnalysis();
+            addLog('SUCCESS', '🐱 Bot JERCAT initialisé - Prêt pour le trading');
+            addLog('INFO', '💎 Token officiel: JERCAT (0x197CF...cCF)');
+            addLog('INFO', '🔗 DEX: https://dex-jercat.vercel.app/');
             addLog('INFO', 'Système prêt - Tous les indicateurs actifs');
         }
 
@@ -790,6 +848,8 @@
                     document.getElementById('sellBtn').disabled = false;
                     document.getElementById('startBotBtn').disabled = true;
                     document.getElementById('connectBtn').textContent = '✅ Connecté';
+                    
+                    document.getElementById('botStatusText').innerHTML = '<span style="color: #ffa500;">⚠️ Mode auto non disponible avec MetaMask</span>';
 
                     trades.initialCapital = parseFloat(balanceBNB);
 
@@ -847,6 +907,8 @@
                     document.getElementById('sellBtn').disabled = false;
                     document.getElementById('startBotBtn').disabled = false;
                     document.getElementById('connectBtn').textContent = '✅ Connecté';
+                    
+                    document.getElementById('botStatusText').innerHTML = '<span style="color: #00ff88;">✅ Prêt à démarrer le bot automatique</span>';
 
                     trades.initialCapital = parseFloat(balanceBNB);
 
@@ -1222,21 +1284,25 @@
 
         function startBot() {
             if (!userAccount) {
-                alert('❌ Connectez votre wallet!');
+                alert('❌ Connectez votre wallet d\'abord!');
+                addLog('ERROR', 'Wallet non connecté - Impossible de démarrer le bot');
                 return;
             }
             
             if (isMetaMask) {
                 alert('❌ Le mode automatique n\'est pas disponible avec MetaMask.\n\nMetaMask nécessite une validation manuelle pour chaque transaction.\n\nUtilisez une clé privée pour le mode automatique, ou tradez manuellement avec les boutons ACHETER/VENDRE.');
+                addLog('WARNING', 'Mode auto non disponible avec MetaMask');
                 return;
             }
             
             if (!document.getElementById('autoMode').checked) {
-                alert('❌ Activez le mode auto!');
+                alert('❌ Activez le mode auto dans la configuration!');
+                addLog('WARNING', 'Mode auto non activé');
                 return;
             }
 
-            if (!confirm('⚠️ Le bot va faire des VRAIES transactions automatiques!\n\nContinuer?')) {
+            if (!confirm('⚠️ ATTENTION!\n\nLe bot va effectuer des VRAIES transactions automatiques sur BSC Mainnet.\n\n💰 Fonds réels en jeu\n🤖 Trading automatique\n⚡ Sans validation manuelle\n\nÊtes-vous sûr de vouloir continuer?')) {
+                addLog('INFO', 'Démarrage du bot annulé par l\'utilisateur');
                 return;
             }
 
@@ -1253,16 +1319,33 @@
             startBotUptimeCounter();
             
             document.getElementById('startBotBtn').style.display = 'none';
+            document.getElementById('startBotBtn').disabled = true;
             document.getElementById('stopBotBtn').style.display = 'block';
+            document.getElementById('stopBotBtn').disabled = false;
             
-            addLog('SUCCESS', '🤖 BOT DÉMARRÉ - Mode automatique activé');
-            addLog('INFO', `Stratégie: ${strategyName}`);
+            document.getElementById('buyBtn').disabled = true;
+            document.getElementById('sellBtn').disabled = true;
+            
+            document.getElementById('botStatusText').innerHTML = '<span style="color: #00ff00;">✅ Bot actif - Trading automatique en cours</span>';
+            
+            addLog('SUCCESS', '🤖 ═══════════════════════════════════');
+            addLog('SUCCESS', '🤖 BOT DÉMARRÉ - MODE AUTOMATIQUE ACTIVÉ');
+            addLog('INFO', `📊 Stratégie: ${strategyName}`);
+            addLog('INFO', `💰 Montant par trade: ${document.getElementById('tradeAmount').value} BNB`);
+            addLog('INFO', `📉 Stop Loss: ${document.getElementById('stopLoss').value}%`);
+            addLog('INFO', `📈 Take Profit: ${document.getElementById('takeProfit').value}%`);
+            addLog('SUCCESS', '🤖 ═══════════════════════════════════');
+            
             updateBotCycle('Analyse du marché...');
             
             startAutoTrading();
         }
 
         function stopBot() {
+            if (!confirm('⏹️ Arrêter le bot de trading?\n\nLes trades en cours ne seront pas annulés.')) {
+                return;
+            }
+
             botActive = false;
             botStartTime = null;
             
@@ -1275,9 +1358,22 @@
             }
             
             document.getElementById('startBotBtn').style.display = 'block';
+            document.getElementById('startBotBtn').disabled = false;
             document.getElementById('stopBotBtn').style.display = 'none';
+            document.getElementById('stopBotBtn').disabled = true;
             
+            if (!isMetaMask) {
+                document.getElementById('buyBtn').disabled = false;
+                document.getElementById('sellBtn').disabled = false;
+            }
+            
+            document.getElementById('botStatusText').innerHTML = '<span style="color: #aaa;">Bot arrêté - Prêt à redémarrer</span>';
+            
+            addLog('WARNING', '⏹️ ═══════════════════════════════════');
             addLog('WARNING', '⏹️ BOT ARRÊTÉ');
+            addLog('INFO', `📊 Total trades: ${trades.total}`);
+            addLog('INFO', `💰 Profit/Perte: ${trades.profit.toFixed(6)} BNB`);
+            addLog('WARNING', '⏹️ ═══════════════════════════════════');
         }
 
         function startBotUptimeCounter() {
