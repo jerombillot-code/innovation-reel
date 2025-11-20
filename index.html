@@ -786,6 +786,15 @@
             const hasStrategy = document.getElementById('strategy').value !== '';
             const hasAmount = parseFloat(document.getElementById('tradeAmount').value) > 0;
             
+            console.log('updateBotChecklist:', {
+                isWalletConnected,
+                isAutoModeEnabled,
+                hasStrategy,
+                hasAmount,
+                userAccount,
+                isMetaMask
+            });
+            
             document.getElementById('checkWallet').innerHTML = isWalletConnected 
                 ? '<span style="color: #00ff88;">✅ Wallet connecté avec clé privée</span>'
                 : '<span style="color: #ff0000;">❌ Wallet connecté avec clé privée</span>';
@@ -804,6 +813,8 @@
             
             const allReady = isWalletConnected && isAutoModeEnabled && hasStrategy && hasAmount;
             
+            console.log('allReady:', allReady);
+            
             if (!userAccount) {
                 document.getElementById('botStateText').innerHTML = '<span style="color: #ff0000;">❌ Veuillez d\'abord connecter votre wallet</span>';
                 document.getElementById('startBotBtn').disabled = true;
@@ -816,6 +827,7 @@
             } else if (allReady) {
                 document.getElementById('botStateText').innerHTML = '<span style="color: #00ff88;">✅ Prêt à démarrer! Tous les prérequis sont remplis</span>';
                 document.getElementById('startBotBtn').disabled = false;
+                console.log('Bouton ACTIVÉ');
             } else {
                 document.getElementById('botStateText').innerHTML = '<span style="color: #ffa500;">⚠️ Complétez tous les prérequis ci-dessus</span>';
                 document.getElementById('startBotBtn').disabled = true;
@@ -1409,6 +1421,9 @@
         }
 
         function startBot() {
+            console.log('startBot appelé');
+            addLog('INFO', 'Tentative de démarrage du bot...');
+            
             if (!userAccount) {
                 alert('❌ Connectez votre wallet d\'abord!');
                 addLog('ERROR', 'Wallet non connecté - Impossible de démarrer le bot');
@@ -1461,7 +1476,6 @@
             document.getElementById('botMainStatusBadge').style.animation = 'pulse 2s infinite';
             
             document.getElementById('botStatusBanner').style.display = 'block';
-            document.getElementById('botStatusBadge').style.display = 'inline-block';
             
             const strategySelect = document.getElementById('strategy');
             const strategyName = strategySelect.options[strategySelect.selectedIndex].text;
@@ -1520,7 +1534,6 @@
             document.getElementById('botMainStatusBadge').style.animation = 'none';
             
             document.getElementById('botStatusBanner').style.display = 'none';
-            document.getElementById('botStatusBadge').style.display = 'none';
             
             if (botUptimeInterval) {
                 clearInterval(botUptimeInterval);
