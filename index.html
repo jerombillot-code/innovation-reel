@@ -37,6 +37,13 @@
             margin: 15px 0;
             font-weight: bold;
         }
+        
+        /* Animation pulse pour l'indicateur */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        
         .feature-badge {
             display: inline-block;
             background: rgba(0,245,255,0.2);
@@ -242,11 +249,35 @@
             <div class="warning-banner">
                 ⚠️ MODE TRADING RÉEL - TRANSACTIONS BLOCKCHAIN RÉELLES ⚠️
             </div>
+            
+            <!-- Indicateur de statut du bot -->
+            <div id="botStatusBanner" style="margin: 15px auto; max-width: 700px; padding: 20px; background: rgba(0,255,136,0.15); border-radius: 15px; border: 2px solid #00ff88; display: none; box-shadow: 0 0 30px rgba(0,255,136,0.3);">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div id="botStatusLight" style="width: 24px; height: 24px; border-radius: 50%; background: #00ff00; animation: pulse 1.5s infinite; box-shadow: 0 0 20px #00ff00;"></div>
+                        <span style="font-size: 1.3em; font-weight: bold; color: #00ff00; text-shadow: 0 0 10px #00ff00;">BOT ACTIF</span>
+                    </div>
+                    <div style="border-left: 2px solid rgba(255,255,255,0.3); padding-left: 20px;">
+                        <div style="font-size: 0.85em; color: #aaa;">⏱️ Temps d'activité</div>
+                        <div id="botUptime" style="font-size: 1.2em; font-weight: bold; color: #00f5ff; font-family: 'Courier New', monospace;">00:00:00</div>
+                    </div>
+                    <div style="border-left: 2px solid rgba(255,255,255,0.3); padding-left: 20px;">
+                        <div style="font-size: 0.85em; color: #aaa;">🔄 Cycle actuel</div>
+                        <div id="botCycle" style="font-size: 1.1em; font-weight: bold; color: #ffd700;">En attente...</div>
+                    </div>
+                    <div style="border-left: 2px solid rgba(255,255,255,0.3); padding-left: 20px;">
+                        <div style="font-size: 0.85em; color: #aaa;">📊 Stratégie</div>
+                        <div id="botStrategy" style="font-size: 1.1em; font-weight: bold; color: #ff00ff;">--</div>
+                    </div>
+                </div>
+            </div>
+            
             <div style="margin-top: 15px;">
                 <span class="feature-badge">🔴 LIVE</span>
                 <span class="feature-badge">Binance API</span>
                 <span class="feature-badge">PancakeSwap V2</span>
                 <span class="feature-badge">BSC Mainnet</span>
+                <span id="botStatusBadge" class="feature-badge" style="display: none; background: rgba(0,255,0,0.3); border: 1px solid #00ff00; animation: pulse 2s infinite;">🤖 BOT EN MARCHE</span>
             </div>
         </div>
 
@@ -539,6 +570,8 @@
         let priceChart, profitChart, priceUpdateInterval;
         let isMetaMask = false;
         let activeTrades = [];
+        let botStartTime = null;
+        let botUptimeInterval = null;
         
         // Nouveaux indicateurs
         let sentimentScore = 50;
@@ -904,6 +937,10 @@
                 return;
             }
 
+            if (botActive) {
+                updateBotCycle('Exécution ACHAT...');
+            }
+
             addLog('WARNING', '🔄 Préparation achat...');
             document.getElementById('buyBtn').disabled = true;
 
@@ -982,11 +1019,18 @@
                 await updateBalance();
                 updatePerformanceStats();
 
+                if (botActive) {
+                    updateBotCycle('En attente signal VENTE...');
+                }
+
             } catch (error) {
                 if (error.code === 4001) {
                     addLog('WARNING', '❌ Transaction annulée par l\'utilisateur');
                 } else {
                     addLog('ERROR', `❌ Erreur: ${error.message}`);
+                }
+                if (botActive) {
+                    updateBotCycle('Erreur - en attente...');
                 }
             } finally {
                 document.getElementById('buyBtn').disabled = false;
@@ -996,6 +1040,10 @@
         async function executeSell() {
             if (!confirm('⚠️ VRAIE TRANSACTION!\n\nVendre vos tokens pour BNB sur BSC Mainnet?\n\nContinuer?')) {
                 return;
+            }
+
+            if (botActive) {
+                updateBotCycle('Exécution VENTE...');
             }
 
             addLog('WARNING', '🔄 Préparation vente...');
@@ -1095,11 +1143,18 @@
                 await updateBalance();
                 updatePerformanceStats();
 
+                if (botActive) {
+                    updateBotCycle('En attente signal ACHAT...');
+                }
+
             } catch (error) {
                 if (error.code === 4001) {
                     addLog('WARNING', '❌ Transaction annulée par l\'utilisateur');
                 } else {
                     addLog('ERROR', `❌ Erreur: ${error.message}`);
+                }
+                if (botActive) {
+                    updateBotCycle('Erreur - en attente...');
                 }
             } finally {
                 document.getElementById('sellBtn').disabled = false;
@@ -1139,18 +1194,76 @@
             }
 
             botActive = true;
+            botStartTime = Date.now();
+            
+            // Afficher les indicateurs de bot actif
+            document.getElementById('botStatusBanner').style.display = 'block';
+            document.getElementById('botStatusBadge').style.display = 'inline-block';
+            
+            // Mettre à jour la stratégie affichée
+            const strategySelect = document.getElementById('strategy');
+            const strategyName = strategySelect.options[strategySelect.selectedIndex].text;
+            document.getElementById('botStrategy').textContent = strategyName;
+            
+            // Démarrer le compteur de temps
+            startBotUptimeCounter();
+            
             document.getElementById('startBotBtn').style.display = 'none';
             document.getElementById('stopBotBtn').style.display = 'block';
             
-            addLog('SUCCESS', '🤖 BOT DÉMARRÉ');
+            addLog('SUCCESS', '🤖 BOT DÉMARRÉ - Mode automatique activé');
+            addLog('INFO', `Stratégie: ${strategyName}`);
+            updateBotCycle('Analyse du marché...');
+            
             startAutoTrading();
         }
 
         function stopBot() {
             botActive = false;
+            botStartTime = null;
+            
+            // Cacher les indicateurs
+            document.getElementById('botStatusBanner').style.display = 'none';
+            document.getElementById('botStatusBadge').style.display = 'none';
+            
+            // Arrêter le compteur de temps
+            if (botUptimeInterval) {
+                clearInterval(botUptimeInterval);
+                botUptimeInterval = null;
+            }
+            
             document.getElementById('startBotBtn').style.display = 'block';
             document.getElementById('stopBotBtn').style.display = 'none';
+            
             addLog('WARNING', '⏹️ BOT ARRÊTÉ');
+        }
+
+        function startBotUptimeCounter() {
+            // Mettre à jour immédiatement
+            updateBotUptime();
+            
+            // Puis toutes les secondes
+            botUptimeInterval = setInterval(updateBotUptime, 1000);
+        }
+
+        function updateBotUptime() {
+            if (!botStartTime) return;
+            
+            const elapsed = Date.now() - botStartTime;
+            const hours = Math.floor(elapsed / 3600000);
+            const minutes = Math.floor((elapsed % 3600000) / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            
+            const timeString = 
+                String(hours).padStart(2, '0') + ':' +
+                String(minutes).padStart(2, '0') + ':' +
+                String(seconds).padStart(2, '0');
+            
+            document.getElementById('botUptime').textContent = timeString;
+        }
+
+        function updateBotCycle(message) {
+            document.getElementById('botCycle').textContent = message;
         }
 
         function startAutoTrading() {
@@ -1160,7 +1273,12 @@
                     return;
                 }
 
-                if (priceHistory.length < 5) return;
+                if (priceHistory.length < 5) {
+                    updateBotCycle('Collecte de données...');
+                    return;
+                }
+
+                updateBotCycle('Analyse en cours...');
 
                 const strategy = document.getElementById('strategy').value;
                 const currentPrice = priceHistory[priceHistory.length - 1];
@@ -1242,6 +1360,8 @@
                     await executeBuy();
                 } else if (shouldSell && activeTrades.length > 0) {
                     await executeSell();
+                } else {
+                    updateBotCycle('En attente signal...');
                 }
 
             }, 30000); // Check toutes les 30 secondes
