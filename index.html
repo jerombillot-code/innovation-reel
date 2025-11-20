@@ -43,6 +43,11 @@
             50% { opacity: 0.7; transform: scale(1.1); }
         }
         
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(0,255,0,0.4); }
+            50% { box-shadow: 0 0 40px rgba(0,255,0,0.8); }
+        }
+        
         .feature-badge {
             display: inline-block;
             background: rgba(0,245,255,0.2);
@@ -245,6 +250,22 @@
     <div class="container">
         <div class="header">
             <h1>🤖 AI Crypto Trading Bot 2025</h1>
+            
+            <!-- INDICATEUR PRINCIPAL D'ÉTAT DU BOT -->
+            <div id="mainBotIndicator" style="margin: 20px auto; max-width: 500px; padding: 20px; background: rgba(255,0,0,0.2); border-radius: 15px; border: 3px solid #ff0000; box-shadow: 0 0 30px rgba(255,0,0,0.4); transition: all 0.3s;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                    <div id="mainBotIcon" style="font-size: 3em;">⏹️</div>
+                    <div style="text-align: center;">
+                        <div id="mainBotStatus" style="font-size: 1.8em; font-weight: bold; color: #ff0000; text-shadow: 0 0 10px rgba(255,0,0,0.5);">
+                            BOT ARRÊTÉ
+                        </div>
+                        <div id="mainBotSubtext" style="font-size: 0.9em; color: #aaa; margin-top: 5px;">
+                            Mode manuel disponible
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="warning-banner">
                 ⚠️ MODE TRADING RÉEL - TRANSACTIONS BLOCKCHAIN RÉELLES ⚠️
             </div>
@@ -296,7 +317,7 @@
                 <span class="feature-badge">Binance API</span>
                 <span class="feature-badge">PancakeSwap V2</span>
                 <span class="feature-badge">BSC Mainnet</span>
-                <span id="botStatusBadge" class="feature-badge" style="display: none; background: rgba(0,255,0,0.3); border: 1px solid #00ff00; animation: pulse 2s infinite;">🤖 BOT EN MARCHE</span>
+                <span id="botMainStatusBadge" class="feature-badge" style="background: rgba(255,0,0,0.3); border: 2px solid #ff0000;">⏹️ BOT ARRÊTÉ</span>
             </div>
         </div>
 
@@ -1420,6 +1441,25 @@
             botActive = true;
             botStartTime = Date.now();
             
+            // Changer le titre de la page
+            document.title = '▶️ BOT ACTIF - AI Crypto Trading Bot';
+            
+            // Mettre à jour l'indicateur principal
+            document.getElementById('mainBotIndicator').style.background = 'rgba(0,255,0,0.2)';
+            document.getElementById('mainBotIndicator').style.borderColor = '#00ff00';
+            document.getElementById('mainBotIndicator').style.boxShadow = '0 0 30px rgba(0,255,0,0.6)';
+            document.getElementById('mainBotIndicator').style.animation = 'glow 2s infinite';
+            document.getElementById('mainBotIcon').textContent = '▶️';
+            document.getElementById('mainBotStatus').textContent = 'BOT EN MARCHE';
+            document.getElementById('mainBotStatus').style.color = '#00ff00';
+            document.getElementById('mainBotStatus').style.textShadow = '0 0 10px rgba(0,255,0,0.8)';
+            document.getElementById('mainBotSubtext').textContent = 'Trading automatique actif';
+            
+            document.getElementById('botMainStatusBadge').textContent = '▶️ BOT ACTIF';
+            document.getElementById('botMainStatusBadge').style.background = 'rgba(0,255,0,0.3)';
+            document.getElementById('botMainStatusBadge').style.borderColor = '#00ff00';
+            document.getElementById('botMainStatusBadge').style.animation = 'pulse 2s infinite';
+            
             document.getElementById('botStatusBanner').style.display = 'block';
             document.getElementById('botStatusBadge').style.display = 'inline-block';
             
@@ -1459,6 +1499,25 @@
 
             botActive = false;
             botStartTime = null;
+            
+            // Restaurer le titre de la page
+            document.title = 'AI Crypto Trading Bot - REAL MODE';
+            
+            // Mettre à jour l'indicateur principal
+            document.getElementById('mainBotIndicator').style.background = 'rgba(255,0,0,0.2)';
+            document.getElementById('mainBotIndicator').style.borderColor = '#ff0000';
+            document.getElementById('mainBotIndicator').style.boxShadow = '0 0 30px rgba(255,0,0,0.4)';
+            document.getElementById('mainBotIndicator').style.animation = 'none';
+            document.getElementById('mainBotIcon').textContent = '⏹️';
+            document.getElementById('mainBotStatus').textContent = 'BOT ARRÊTÉ';
+            document.getElementById('mainBotStatus').style.color = '#ff0000';
+            document.getElementById('mainBotStatus').style.textShadow = '0 0 10px rgba(255,0,0,0.5)';
+            document.getElementById('mainBotSubtext').textContent = 'Mode manuel disponible';
+            
+            document.getElementById('botMainStatusBadge').textContent = '⏹️ BOT ARRÊTÉ';
+            document.getElementById('botMainStatusBadge').style.background = 'rgba(255,0,0,0.3)';
+            document.getElementById('botMainStatusBadge').style.borderColor = '#ff0000';
+            document.getElementById('botMainStatusBadge').style.animation = 'none';
             
             document.getElementById('botStatusBanner').style.display = 'none';
             document.getElementById('botStatusBadge').style.display = 'none';
