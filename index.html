@@ -615,41 +615,25 @@
                         </div>
                         
                         <div style="font-size: 0.85em; color: #aaa; margin-bottom: 12px; line-height: 1.5;">
-                            Le bot analyse le marché en temps réel et exécute automatiquement des trades selon votre stratégie.
+                            Le bot analyse le marché en temps réel et exécute automatiquement des trades.
                         </div>
                         
-                        <!-- Checklist de prérequis -->
-                        <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-                            <div style="font-size: 0.9em; font-weight: bold; color: #00f5ff; margin-bottom: 8px;">
-                                ✓ Prérequis:
-                            </div>
-                            <div style="font-size: 0.85em; line-height: 1.8;">
-                                <div id="checkWallet" style="color: #ff0000;">❌ Wallet connecté avec clé privée</div>
-                                <div id="checkAutoMode" style="color: #ff0000;">❌ Mode Auto activé dans Configuration</div>
-                                <div id="checkStrategy" style="color: #00ff88;">✅ Stratégie sélectionnée</div>
-                                <div id="checkAmount" style="color: #00ff88;">✅ Montant par trade configuré</div>
+                        <!-- État simple -->
+                        <div id="botSimpleState" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+                            <div id="botSimpleStateText" style="font-size: 1.1em; font-weight: bold; color: #ffa500;">
+                                ⏸️ Bot en attente
                             </div>
                         </div>
                         
-                        <!-- État actuel -->
-                        <div id="botCurrentState" style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-                            <div style="font-size: 0.9em; font-weight: bold; color: #ffa500; margin-bottom: 5px;">
-                                📊 État actuel:
-                            </div>
-                            <div id="botStateText" style="font-size: 0.85em; color: #aaa;">
-                                En attente de configuration...
-                            </div>
-                        </div>
-                        
-                        <!-- Boutons de contrôle -->
+                        <!-- Boutons TOUJOURS ACTIFS -->
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn" id="startBotBtn" disabled style="flex: 1; background: linear-gradient(135deg, #00ff88, #00f5ff); font-size: 1em; padding: 15px;">
+                            <button class="btn" id="startBotBtnNew" style="flex: 1; background: linear-gradient(135deg, #00ff88, #00f5ff); font-size: 1em; padding: 15px; cursor: pointer;">
                                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
                                     <span style="font-size: 1.2em;">▶️</span>
                                     <span>DÉMARRER LE BOT</span>
                                 </div>
                             </button>
-                            <button class="btn btn-danger" id="stopBotBtn" disabled style="flex: 1; font-size: 1em; padding: 15px; display: none;">
+                            <button class="btn btn-danger" id="stopBotBtnNew" style="flex: 1; font-size: 1em; padding: 15px; display: none; cursor: pointer;">
                                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
                                     <span style="font-size: 1.2em;">⏹️</span>
                                     <span>ARRÊTER LE BOT</span>
@@ -659,7 +643,8 @@
                         
                         <!-- Aide -->
                         <div style="margin-top: 12px; font-size: 0.75em; color: #aaa; text-align: center; line-height: 1.5;">
-                            💡 Astuce: Utilisez <code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 3px;">Ctrl+Q</code> pour arrêt d'urgence
+                            💡 Le bot vérifiera automatiquement vos paramètres au démarrage<br>
+                            Raccourci: <code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 3px;">Ctrl+Q</code> pour arrêt d'urgence
                         </div>
                     </div>
                 </div>
@@ -771,86 +756,27 @@
             document.getElementById('connectBtn').addEventListener('click', connectWallet);
             document.getElementById('buyBtn').addEventListener('click', executeBuy);
             document.getElementById('sellBtn').addEventListener('click', executeSell);
-            
-            // Ajouter un listener de debug
-            const startBtn = document.getElementById('startBotBtn');
-            console.log('startBotBtn trouvé:', startBtn);
-            startBtn.addEventListener('click', function(e) {
-                console.log('CLIC DÉTECTÉ sur startBotBtn');
-                console.log('Bouton disabled?', startBtn.disabled);
-                console.log('Event:', e);
-                startBot();
-            });
-            
-            document.getElementById('stopBotBtn').addEventListener('click', stopBot);
             document.getElementById('tradingPair').addEventListener('change', updatePrice);
             document.getElementById('tokenAddress').addEventListener('change', function() {
                 tokenPriceHistory = [];
                 updateTokenChart();
             });
             
-            document.getElementById('autoMode').addEventListener('change', function() {
-                console.log('Mode auto changé:', this.checked);
-                updateBotChecklist();
+            // NOUVEAU SYSTÈME SIMPLE - Boutons toujours actifs
+            document.getElementById('startBotBtnNew').addEventListener('click', function() {
+                console.log('Clic sur startBotBtnNew');
+                startBotSimple();
             });
-            document.getElementById('strategy').addEventListener('change', updateBotChecklist);
-            document.getElementById('tradeAmount').addEventListener('input', updateBotChecklist);
+            
+            document.getElementById('stopBotBtnNew').addEventListener('click', function() {
+                console.log('Clic sur stopBotBtnNew');
+                stopBotSimple();
+            });
         }
         
         function updateBotChecklist() {
-            const isWalletConnected = userAccount && !isMetaMask;
-            const isAutoModeEnabled = document.getElementById('autoMode').checked;
-            const hasStrategy = document.getElementById('strategy').value !== '';
-            const hasAmount = parseFloat(document.getElementById('tradeAmount').value) > 0;
-            
-            console.log('updateBotChecklist:', {
-                isWalletConnected,
-                isAutoModeEnabled,
-                hasStrategy,
-                hasAmount,
-                userAccount,
-                isMetaMask
-            });
-            
-            document.getElementById('checkWallet').innerHTML = isWalletConnected 
-                ? '<span style="color: #00ff88;">✅ Wallet connecté avec clé privée</span>'
-                : '<span style="color: #ff0000;">❌ Wallet connecté avec clé privée</span>';
-            
-            document.getElementById('checkAutoMode').innerHTML = isAutoModeEnabled 
-                ? '<span style="color: #00ff88;">✅ Mode Auto activé dans Configuration</span>'
-                : '<span style="color: #ff0000;">❌ Mode Auto activé dans Configuration</span>';
-            
-            document.getElementById('checkStrategy').innerHTML = hasStrategy 
-                ? '<span style="color: #00ff88;">✅ Stratégie sélectionnée</span>'
-                : '<span style="color: #ffa500;">⚠️ Stratégie sélectionnée</span>';
-            
-            document.getElementById('checkAmount').innerHTML = hasAmount 
-                ? '<span style="color: #00ff88;">✅ Montant par trade configuré</span>'
-                : '<span style="color: #ffa500;">⚠️ Montant par trade configuré</span>';
-            
-            const allReady = isWalletConnected && isAutoModeEnabled && hasStrategy && hasAmount;
-            
-            console.log('allReady:', allReady);
-            
-            // Logique simplifiée - on active dès que wallet + mode auto
-            if (!userAccount) {
-                document.getElementById('botStateText').innerHTML = '<span style="color: #ff0000;">❌ Veuillez d\'abord connecter votre wallet</span>';
-                document.getElementById('startBotBtn').disabled = true;
-                console.log('Bouton DÉSACTIVÉ - pas de wallet');
-            } else if (isMetaMask) {
-                document.getElementById('botStateText').innerHTML = '<span style="color: #ffa500;">⚠️ Mode automatique non disponible avec MetaMask</span>';
-                document.getElementById('startBotBtn').disabled = true;
-                console.log('Bouton DÉSACTIVÉ - MetaMask');
-            } else if (!isAutoModeEnabled) {
-                document.getElementById('botStateText').innerHTML = '<span style="color: #ffa500;">⚠️ Activez le mode Auto dans la configuration</span>';
-                document.getElementById('startBotBtn').disabled = false; // On active quand même, startBot() fera la vraie vérif
-                console.log('Bouton ACTIVÉ (mais mode auto désactivé)');
-            } else {
-                // Wallet connecté + Mode auto activé = on active le bouton
-                document.getElementById('botStateText').innerHTML = '<span style="color: #00ff88;">✅ Prêt à démarrer! Cliquez sur le bouton ci-dessous</span>';
-                document.getElementById('startBotBtn').disabled = false;
-                console.log('Bouton ACTIVÉ - Prêt!');
-            }
+            // Fonction legacy - plus utilisée avec le nouveau système
+            return;
         }
 
         function initCharts() {
@@ -1445,56 +1371,56 @@
         }
 
         function startBot() {
-            console.log('=== startBot appelé ===');
-            console.log('userAccount:', userAccount);
-            console.log('isMetaMask:', isMetaMask);
-            console.log('autoMode checked:', document.getElementById('autoMode').checked);
+            // Redirection vers la nouvelle fonction
+            startBotSimple();
+        }
+
+        function stopBot() {
+            // Redirection vers la nouvelle fonction
+            stopBotSimple();
+        }
+
+        function startBotSimple() {
+            console.log('=== startBotSimple appelé ===');
             
-            addLog('INFO', 'Tentative de démarrage du bot...');
-            
+            // Vérifications simples avec messages clairs
             if (!userAccount) {
-                console.log('BLOQUÉ: Pas de userAccount');
+                document.getElementById('botSimpleStateText').innerHTML = '❌ Connectez d\'abord votre wallet';
                 alert('❌ Connectez votre wallet d\'abord!');
-                addLog('ERROR', 'Wallet non connecté - Impossible de démarrer le bot');
                 return;
             }
             
             if (isMetaMask) {
-                console.log('BLOQUÉ: MetaMask détecté');
-                alert('❌ Le mode automatique n\'est pas disponible avec MetaMask.\n\nMetaMask nécessite une validation manuelle pour chaque transaction.\n\nUtilisez une clé privée pour le mode automatique, ou tradez manuellement avec les boutons ACHETER/VENDRE.');
-                addLog('WARNING', 'Mode auto non disponible avec MetaMask');
+                document.getElementById('botSimpleStateText').innerHTML = '⚠️ MetaMask non compatible en mode auto';
+                alert('❌ Le mode automatique nécessite une clé privée.\n\nMetaMask requiert une validation manuelle pour chaque transaction.');
                 return;
             }
             
             if (!document.getElementById('autoMode').checked) {
-                console.log('BLOQUÉ: Mode auto non coché');
-                alert('❌ Activez le mode auto dans la configuration!\n\nAllez dans Configuration → Mode Auto → Activez le switch');
-                addLog('WARNING', 'Mode auto non activé');
+                document.getElementById('botSimpleStateText').innerHTML = '⚠️ Activez le Mode Auto dans Configuration';
+                alert('❌ Activez le Mode Auto!\n\nAllez dans Configuration → Mode Auto → Cochez la case');
                 return;
             }
-            
-            console.log('Toutes les vérifications passées, affichage de la confirmation...');
 
-            if (!confirm('⚠️ ATTENTION - DÉMARRAGE DU BOT!\n\n' +
-                '🤖 Le bot va effectuer des VRAIES transactions automatiques\n' +
-                '💰 Vos fonds réels seront utilisés\n' +
-                '⚡ Trading automatique sans validation manuelle\n' +
-                '📊 Stratégie: ' + document.getElementById('strategy').options[document.getElementById('strategy').selectedIndex].text + '\n' +
-                '💵 Montant par trade: ' + document.getElementById('tradeAmount').value + ' BNB\n\n' +
-                'Êtes-vous sûr de vouloir continuer?')) {
-                addLog('INFO', 'Démarrage du bot annulé par l\'utilisateur');
+            const strategyName = document.getElementById('strategy').options[document.getElementById('strategy').selectedIndex].text;
+            const tradeAmount = document.getElementById('tradeAmount').value;
+            
+            if (!confirm('⚠️ DÉMARRAGE DU BOT DE TRADING!\n\n' +
+                '🤖 Transactions automatiques réelles\n' +
+                '💰 Fonds réels utilisés\n' +
+                '📊 Stratégie: ' + strategyName + '\n' +
+                '💵 Montant: ' + tradeAmount + ' BNB\n\n' +
+                'Démarrer le bot?')) {
                 return;
             }
-            
-            console.log('Confirmation OK, démarrage du bot...');
 
+            // Démarrer le bot
             botActive = true;
             botStartTime = Date.now();
             
-            // Changer le titre de la page
+            // Mise à jour visuelle
             document.title = '▶️ BOT ACTIF - AI Crypto Trading Bot';
             
-            // Mettre à jour l'indicateur principal
             document.getElementById('mainBotIndicator').style.background = 'rgba(0,255,0,0.2)';
             document.getElementById('mainBotIndicator').style.borderColor = '#00ff00';
             document.getElementById('mainBotIndicator').style.boxShadow = '0 0 30px rgba(0,255,0,0.6)';
@@ -1511,48 +1437,38 @@
             document.getElementById('botMainStatusBadge').style.animation = 'pulse 2s infinite';
             
             document.getElementById('botStatusBanner').style.display = 'block';
-            
-            const strategySelect = document.getElementById('strategy');
-            const strategyName = strategySelect.options[strategySelect.selectedIndex].text;
             document.getElementById('botStrategy').textContent = strategyName;
             
-            startBotUptimeCounter();
+            document.getElementById('botSimpleStateText').innerHTML = '🚀 <span style="color: #00ff00; font-weight: bold;">BOT EN MARCHE</span>';
             
-            document.getElementById('startBotBtn').style.display = 'none';
-            document.getElementById('startBotBtn').disabled = true;
-            document.getElementById('stopBotBtn').style.display = 'block';
-            document.getElementById('stopBotBtn').disabled = false;
+            document.getElementById('startBotBtnNew').style.display = 'none';
+            document.getElementById('stopBotBtnNew').style.display = 'block';
             
             document.getElementById('buyBtn').disabled = true;
             document.getElementById('sellBtn').disabled = true;
             
-            document.getElementById('botStateText').innerHTML = '<span style="color: #00ff00; font-weight: bold;">🚀 Bot actif - Trading automatique en cours</span>';
+            startBotUptimeCounter();
             
             addLog('SUCCESS', '🤖 ═══════════════════════════════════');
-            addLog('SUCCESS', '🤖 BOT DÉMARRÉ - MODE AUTOMATIQUE ACTIVÉ');
+            addLog('SUCCESS', '🤖 BOT DÉMARRÉ - MODE AUTOMATIQUE');
             addLog('INFO', `📊 Stratégie: ${strategyName}`);
-            addLog('INFO', `💰 Montant par trade: ${document.getElementById('tradeAmount').value} BNB`);
-            addLog('INFO', `📉 Stop Loss: ${document.getElementById('stopLoss').value}%`);
-            addLog('INFO', `📈 Take Profit: ${document.getElementById('takeProfit').value}%`);
+            addLog('INFO', `💰 Montant: ${tradeAmount} BNB`);
             addLog('SUCCESS', '🤖 ═══════════════════════════════════');
             
             updateBotCycle('Analyse du marché...');
-            
             startAutoTrading();
         }
 
-        function stopBot() {
-            if (!confirm('⏹️ Arrêter le bot de trading?\n\nLes trades en cours ne seront pas annulés.')) {
+        function stopBotSimple() {
+            if (!confirm('⏹️ Arrêter le bot?')) {
                 return;
             }
 
             botActive = false;
             botStartTime = null;
             
-            // Restaurer le titre de la page
             document.title = 'AI Crypto Trading Bot - REAL MODE';
             
-            // Mettre à jour l'indicateur principal
             document.getElementById('mainBotIndicator').style.background = 'rgba(255,0,0,0.2)';
             document.getElementById('mainBotIndicator').style.borderColor = '#ff0000';
             document.getElementById('mainBotIndicator').style.boxShadow = '0 0 30px rgba(255,0,0,0.4)';
@@ -1575,25 +1491,18 @@
                 botUptimeInterval = null;
             }
             
-            document.getElementById('startBotBtn').style.display = 'block';
-            document.getElementById('startBotBtn').disabled = false;
-            document.getElementById('stopBotBtn').style.display = 'none';
-            document.getElementById('stopBotBtn').disabled = true;
+            document.getElementById('botSimpleStateText').innerHTML = '⏸️ Bot en attente';
+            
+            document.getElementById('startBotBtnNew').style.display = 'block';
+            document.getElementById('stopBotBtnNew').style.display = 'none';
             
             if (!isMetaMask) {
                 document.getElementById('buyBtn').disabled = false;
                 document.getElementById('sellBtn').disabled = false;
             }
             
-            document.getElementById('botStateText').innerHTML = '<span style="color: #00ff88;">✅ Bot arrêté - Prêt à redémarrer</span>';
-            
-            addLog('WARNING', '⏹️ ═══════════════════════════════════');
             addLog('WARNING', '⏹️ BOT ARRÊTÉ');
-            addLog('INFO', `📊 Total trades: ${trades.total}`);
-            addLog('INFO', `💰 Profit/Perte: ${trades.profit.toFixed(6)} BNB`);
-            addLog('WARNING', '⏹️ ═══════════════════════════════════');
-            
-            updateBotChecklist();
+            addLog('INFO', `Total trades: ${trades.total} | Profit: ${trades.profit.toFixed(6)} BNB`);
         }
 
         function startBotUptimeCounter() {
