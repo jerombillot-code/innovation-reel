@@ -38,7 +38,6 @@
             font-weight: bold;
         }
         
-        /* Animation pulse pour l'indicateur */
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.7; transform: scale(1.1); }
@@ -250,7 +249,6 @@
                 ⚠️ MODE TRADING RÉEL - TRANSACTIONS BLOCKCHAIN RÉELLES ⚠️
             </div>
             
-            <!-- Indicateur de statut du bot -->
             <div id="botStatusBanner" style="margin: 15px auto; max-width: 700px; padding: 20px; background: rgba(0,255,136,0.15); border-radius: 15px; border: 2px solid #00ff88; display: none; box-shadow: 0 0 30px rgba(0,255,136,0.3);">
                 <div style="display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap;">
                     <div style="display: flex; align-items: center; gap: 12px;">
@@ -385,15 +383,15 @@
                 <div class="stats-grid">
                     <div class="stat-item">
                         <div class="stat-label">Whales Actifs</div>
-                        <div class="stat-value" id="activeWhales">0</div>
+                        <div class="stat-value" id="activeWhales">--</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Volume 1h</div>
-                        <div class="stat-value" id="whaleVolume">$0</div>
+                        <div class="stat-value" id="whaleVolume">$--</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Achats/Ventes</div>
-                        <div class="stat-value" id="whaleBuySell">0/0</div>
+                        <div class="stat-value" id="whaleBuySell">--/--</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Signal</div>
@@ -401,9 +399,6 @@
                     </div>
                 </div>
                 <div id="whaleAlerts" style="max-height: 200px; overflow-y: auto; margin-top: 15px;">
-                    <div style="text-align: center; color: #aaa; padding: 20px;">
-                        Scan en cours...
-                    </div>
                 </div>
             </div>
 
@@ -469,11 +464,23 @@
                 <div class="input-group">
                     <label>Token à Trader (BSC)</label>
                     <select id="tokenAddress">
+                        <option value="0x197CF8951d93325A9333857Ee5330daF7aC4bcCF">JERCAT 🐱 (Recommandé)</option>
                         <option value="0x55d398326f99059fF775485246999027B3197955">USDT</option>
                         <option value="0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56">BUSD</option>
                         <option value="0x2170Ed0880ac9A755fd29B2688956BD959F933F8">ETH</option>
                         <option value="0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c">BTCB</option>
                     </select>
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background: rgba(0,255,136,0.1); border-radius: 8px; border: 1px solid rgba(0,255,136,0.3);">
+                    <div style="font-size: 0.85em; color: #00ff88;">
+                        <strong>🐱 JERCAT Token</strong>
+                    </div>
+                    <div style="font-size: 0.75em; color: #aaa; margin-top: 5px;">
+                        Contrat: 0x197C...cCF<br>
+                        <a href="https://dex-jercat.vercel.app/" target="_blank" style="color: #00f5ff; text-decoration: none;">
+                            🔗 Acheter sur DEX JERCAT →
+                        </a>
+                    </div>
                 </div>
                 <div class="input-group">
                     <label>Stratégie de Trading</label>
@@ -573,7 +580,6 @@
         let botStartTime = null;
         let botUptimeInterval = null;
         
-        // Nouveaux indicateurs
         let sentimentScore = 50;
         let whaleCount = 0, whaleBuys = 0, whaleSells = 0;
         let arbOpportunities = 0;
@@ -673,14 +679,12 @@
 
             try {
                 if (connectionType === 'metamask') {
-                    // Connexion MetaMask
                     if (typeof window.ethereum === 'undefined') {
                         throw new Error('MetaMask non installé! Installez MetaMask depuis metamask.io');
                     }
 
                     addLog('INFO', 'Connexion MetaMask...');
 
-                    // Demander la connexion
                     const accounts = await window.ethereum.request({ 
                         method: 'eth_requestAccounts' 
                     });
@@ -689,20 +693,17 @@
                     web3 = new Web3(window.ethereum);
                     isMetaMask = true;
 
-                    // Vérifier le réseau
                     const chainId = await web3.eth.getChainId();
                     if (chainId !== 56n && chainId !== 56) {
                         addLog('WARNING', 'Réseau incorrect détecté');
                         
-                        // Demander de changer vers BSC
                         try {
                             await window.ethereum.request({
                                 method: 'wallet_switchEthereumChain',
-                                params: [{ chainId: '0x38' }], // 56 en hexa
+                                params: [{ chainId: '0x38' }],
                             });
                             addLog('SUCCESS', 'Changement vers BSC Mainnet réussi');
                         } catch (switchError) {
-                            // Si BSC n'est pas ajouté, l'ajouter
                             if (switchError.code === 4902) {
                                 await window.ethereum.request({
                                     method: 'wallet_addEthereumChain',
@@ -737,7 +738,7 @@
 
                     document.getElementById('buyBtn').disabled = false;
                     document.getElementById('sellBtn').disabled = false;
-                    document.getElementById('startBotBtn').disabled = true; // Désactiver le bot auto en mode MetaMask
+                    document.getElementById('startBotBtn').disabled = true;
                     document.getElementById('connectBtn').textContent = '✅ Connecté';
 
                     trades.initialCapital = parseFloat(balanceBNB);
@@ -746,7 +747,6 @@
                     addLog('SUCCESS', `Balance: ${parseFloat(balanceBNB).toFixed(4)} BNB`);
                     addLog('INFO', 'Mode manuel - Vous validerez chaque transaction dans MetaMask');
 
-                    // Écouter les changements de compte
                     window.ethereum.on('accountsChanged', function (accounts) {
                         if (accounts.length === 0) {
                             addLog('WARNING', 'MetaMask déconnecté');
@@ -758,14 +758,12 @@
                         }
                     });
 
-                    // Écouter les changements de réseau
                     window.ethereum.on('chainChanged', function(chainId) {
                         addLog('INFO', 'Réseau changé - Rechargement...');
                         location.reload();
                     });
 
                 } else {
-                    // Connexion par clé privée
                     const privateKey = document.getElementById('privateKey').value.trim();
                     
                     if (!privateKey || !privateKey.startsWith('0x')) {
@@ -825,81 +823,84 @@
             try {
                 const pair = document.getElementById('tradingPair').value;
                 
-                // Essayer plusieurs sources d'API
-                let data = null;
-                const apis = [
-                    `https://api.binance.com/api/v3/ticker/24hr?symbol=${pair}`,
-                    `https://api1.binance.com/api/v3/ticker/24hr?symbol=${pair}`,
-                    `https://api2.binance.com/api/v3/ticker/24hr?symbol=${pair}`,
-                    `https://api3.binance.com/api/v3/ticker/24hr?symbol=${pair}`
-                ];
+                const coinMap = {
+                    'BTCUSDT': 'bitcoin',
+                    'ETHUSDT': 'ethereum',
+                    'BNBUSDT': 'binancecoin',
+                    'ADAUSDT': 'cardano',
+                    'SOLUSDT': 'solana'
+                };
                 
-                for (const api of apis) {
-                    try {
-                        const response = await fetch(api, {
-                            method: 'GET',
-                            headers: {
-                                'Accept': 'application/json'
-                            }
-                        });
+                const coinId = coinMap[pair];
+                
+                try {
+                    const priceResponse = await fetch(
+                        `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`,
+                        { method: 'GET' }
+                    );
+                    
+                    if (priceResponse.ok) {
+                        const priceData = await priceResponse.json();
+                        const coinData = priceData[coinId];
                         
-                        if (response.ok) {
-                            data = await response.json();
-                            break;
+                        const price = coinData.usd;
+                        const change = coinData.usd_24h_change || 0;
+                        
+                        document.getElementById('currentPrice').textContent = ' + price.toFixed(2);
+                        
+                        const changeEl = document.getElementById('priceChange');
+                        changeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+                        changeEl.className = 'price-change ' + (change >= 0 ? 'price-up' : 'price-down');
+                        
+                        const high = price * (1 + Math.abs(change) / 100);
+                        const low = price * (1 - Math.abs(change) / 100);
+                        
+                        document.getElementById('high24h').textContent = ' + high.toFixed(2);
+                        document.getElementById('low24h').textContent = ' + low.toFixed(2);
+                        
+                        const volume = (coinData.usd_24h_vol || 0) / 1000000;
+                        document.getElementById('volume24h').textContent = volume.toFixed(2) + 'M';
+                        
+                        priceHistory.push(price);
+                        if (priceHistory.length > 20) priceHistory.shift();
+                        
+                        priceChart.data.labels = priceHistory.map((_, i) => i);
+                        priceChart.data.datasets[0].data = priceHistory;
+                        priceChart.update('none');
+                        
+                        if (priceHistory.length === 1) {
+                            addLog('SUCCESS', 'Prix réels CoinGecko activés ✓');
                         }
-                    } catch (e) {
-                        continue;
+                        
+                        return;
                     }
+                } catch (e) {
                 }
                 
-                // Si toutes les APIs échouent, utiliser des données simulées réalistes
-                if (!data) {
-                    const basePrices = {
-                        'BTCUSDT': 97234,
-                        'ETHUSDT': 3456,
-                        'BNBUSDT': 689,
-                        'ADAUSDT': 1.08,
-                        'SOLUSDT': 245
-                    };
-                    
-                    const basePrice = basePrices[pair] || 1000;
-                    const variation = (Math.random() - 0.5) * basePrice * 0.002; // ±0.2%
-                    const price = basePrice + variation;
-                    
-                    data = {
-                        lastPrice: price.toString(),
-                        priceChangePercent: ((Math.random() - 0.5) * 4).toFixed(2),
-                        highPrice: (price * 1.015).toString(),
-                        lowPrice: (price * 0.985).toString(),
-                        volume: (Math.random() * 50000 + 10000).toString()
-                    };
-                    
-                    if (priceHistory.length === 0) {
-                        addLog('WARNING', 'Mode données réalistes activé (API Binance CORS bloqué)');
-                        // Afficher un badge de mode simulation
-                        const badge = document.createElement('span');
-                        badge.className = 'feature-badge';
-                        badge.style.background = 'rgba(255,165,0,0.3)';
-                        badge.style.border = '1px solid #ffa500';
-                        badge.textContent = '⚠️ Simulation Prix';
-                        document.querySelector('.header > div:last-child').appendChild(badge);
-                    }
-                }
+                const basePrices = {
+                    'BTCUSDT': 97234,
+                    'ETHUSDT': 3456,
+                    'BNBUSDT': 689,
+                    'ADAUSDT': 1.08,
+                    'SOLUSDT': 245
+                };
                 
-                const price = parseFloat(data.lastPrice);
+                const basePrice = basePrices[pair] || 1000;
+                const variation = (Math.random() - 0.5) * basePrice * 0.002;
+                const price = basePrice + variation;
                 
-                document.getElementById('currentPrice').textContent = '$' + price.toFixed(2);
+                document.getElementById('currentPrice').textContent = ' + price.toFixed(2);
                 
-                const change = parseFloat(data.priceChangePercent);
+                const change = ((Math.random() - 0.5) * 4);
                 const changeEl = document.getElementById('priceChange');
                 changeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
                 changeEl.className = 'price-change ' + (change >= 0 ? 'price-up' : 'price-down');
                 
-                document.getElementById('high24h').textContent = '$' + parseFloat(data.highPrice).toFixed(2);
-                document.getElementById('low24h').textContent = '$' + parseFloat(data.lowPrice).toFixed(2);
+                document.getElementById('high24h').textContent = ' + (price * 1.015).toFixed(2);
+                document.getElementById('low24h').textContent = ' + (price * 0.985).toFixed(2);
                 
-                const volume = (parseFloat(data.volume) / 1000000).toFixed(2);
-                document.getElementById('volume24h').textContent = volume + 'M';
+                const volume = (Math.random() * 50000 + 10000);
+                document.getElementById('volume24h').textContent = (volume / 1000000).toFixed(2) + 'M';
                 
                 priceHistory.push(price);
                 if (priceHistory.length > 20) priceHistory.shift();
@@ -908,8 +909,11 @@
                 priceChart.data.datasets[0].data = priceHistory;
                 priceChart.update('none');
                 
+                if (priceHistory.length === 1) {
+                    addLog('WARNING', 'Mode simulation activé (APIs indisponibles)');
+                }
+                
             } catch (error) {
-                // Erreur silencieuse - utilise des données simulées
             }
         }
 
@@ -928,7 +932,6 @@
                 document.getElementById('estGas').textContent = parseFloat(gasFee).toFixed(6) + ' BNB';
                 document.getElementById('estTotal').textContent = (parseFloat(tradeAmount) + parseFloat(gasFee)).toFixed(6) + ' BNB';
             } catch (error) {
-                // Erreur silencieuse
             }
         }
 
@@ -974,7 +977,6 @@
                 if (isMetaMask) {
                     addLog('INFO', '⏳ Veuillez confirmer dans MetaMask...');
                     
-                    // Transaction avec MetaMask - validation manuelle
                     tx = await router.methods.swapExactETHForTokens(
                         amountOutMin,
                         path,
@@ -987,7 +989,6 @@
                     });
                     
                 } else {
-                    // Transaction automatique avec clé privée
                     tx = await router.methods.swapExactETHForTokens(
                         amountOutMin,
                         path,
@@ -1004,7 +1005,6 @@
                 addLog('SUCCESS', `TX: ${tx.transactionHash}`);
                 addLog('SUCCESS', `Voir: https://bscscan.com/tx/${tx.transactionHash}`);
                 
-                // Ajouter aux trades actifs
                 activeTrades.push({
                     id: Date.now(),
                     type: 'BUY',
@@ -1012,7 +1012,7 @@
                     token: tokenAddress,
                     txHash: tx.transactionHash,
                     timestamp: new Date(),
-                    entryPrice: priceHistory[priceHistory.length - 1] || currentPrice
+                    entryPrice: priceHistory[priceHistory.length - 1] || 0
                 });
                 
                 trades.total++;
@@ -1067,7 +1067,6 @@
 
                 addLog('INFO', `Balance: ${web3.utils.fromWei(balance.toString(), 'ether').substring(0, 10)}...`);
 
-                // Vérifier l'allowance
                 const allowance = await tokenContract.methods.allowance(userAccount, PANCAKE_ROUTER).call();
                 
                 if (BigInt(allowance) < BigInt(balance)) {
@@ -1118,7 +1117,6 @@
                 const bnbReceived = web3.utils.fromWei(amounts[1], 'ether');
                 const tradeAmount = parseFloat(document.getElementById('tradeAmount').value);
                 
-                // Trouver le trade d'achat correspondant
                 const matchingTrade = activeTrades.find(t => t.token === tokenAddress && t.type === 'BUY');
                 
                 let profit = 0;
@@ -1169,7 +1167,6 @@
                 const balanceBNB = web3.utils.fromWei(balance, 'ether');
                 document.getElementById('walletBalance').textContent = parseFloat(balanceBNB).toFixed(4);
             } catch (error) {
-                // Erreur silencieuse
             }
         }
 
@@ -1196,16 +1193,13 @@
             botActive = true;
             botStartTime = Date.now();
             
-            // Afficher les indicateurs de bot actif
             document.getElementById('botStatusBanner').style.display = 'block';
             document.getElementById('botStatusBadge').style.display = 'inline-block';
             
-            // Mettre à jour la stratégie affichée
             const strategySelect = document.getElementById('strategy');
             const strategyName = strategySelect.options[strategySelect.selectedIndex].text;
             document.getElementById('botStrategy').textContent = strategyName;
             
-            // Démarrer le compteur de temps
             startBotUptimeCounter();
             
             document.getElementById('startBotBtn').style.display = 'none';
@@ -1222,11 +1216,9 @@
             botActive = false;
             botStartTime = null;
             
-            // Cacher les indicateurs
             document.getElementById('botStatusBanner').style.display = 'none';
             document.getElementById('botStatusBadge').style.display = 'none';
             
-            // Arrêter le compteur de temps
             if (botUptimeInterval) {
                 clearInterval(botUptimeInterval);
                 botUptimeInterval = null;
@@ -1239,10 +1231,7 @@
         }
 
         function startBotUptimeCounter() {
-            // Mettre à jour immédiatement
             updateBotUptime();
-            
-            // Puis toutes les secondes
             botUptimeInterval = setInterval(updateBotUptime, 1000);
         }
 
@@ -1285,23 +1274,21 @@
                 let shouldBuy = false;
                 let shouldSell = false;
                 
-                // Stratégie: Support/Résistance Dynamique
                 if (strategy === 'support_resistance') {
                     const distanceFromSupport = ((currentPrice - supportLevel) / currentPrice) * 100;
                     const distanceFromResistance = ((resistanceLevel - currentPrice) / currentPrice) * 100;
                     
                     if (distanceFromSupport < 0.5 && distanceFromSupport > -0.5 && momentum > 0) {
                         shouldBuy = true;
-                        addLog('INFO', `📊 Achat au support: $${currentPrice.toFixed(2)} (Support: $${supportLevel.toFixed(2)})`);
+                        addLog('INFO', `📊 Achat au support: ${currentPrice.toFixed(2)} (Support: ${supportLevel.toFixed(2)})`);
                     }
                     
                     if (distanceFromResistance < 0.5 && distanceFromResistance > -0.5) {
                         shouldSell = true;
-                        addLog('INFO', `📊 Vente à la résistance: $${currentPrice.toFixed(2)} (Résistance: $${resistanceLevel.toFixed(2)})`);
+                        addLog('INFO', `📊 Vente à la résistance: ${currentPrice.toFixed(2)} (Résistance: ${resistanceLevel.toFixed(2)})`);
                     }
                 }
                 
-                // Stratégie: Sentiment AI
                 else if (strategy === 'sentiment') {
                     if (sentimentScore > 70) {
                         shouldBuy = true;
@@ -1312,7 +1299,6 @@
                     }
                 }
                 
-                // Stratégie: Whale Following
                 else if (strategy === 'whale_following') {
                     if (whaleBuys > whaleSells + 2 && whaleCount > 5) {
                         shouldBuy = true;
@@ -1323,7 +1309,6 @@
                     }
                 }
                 
-                // Stratégie: Arbitrage
                 else if (strategy === 'arbitrage') {
                     if (arbOpportunities > 3) {
                         shouldBuy = true;
@@ -1331,7 +1316,6 @@
                     }
                 }
                 
-                // Stratégie: Momentum
                 else if (strategy === 'momentum') {
                     if (momentum > 3 && trendStrength > 60) {
                         shouldBuy = true;
@@ -1342,7 +1326,6 @@
                     }
                 }
                 
-                // Stratégie: Hybrid (Tous combinés)
                 else if (strategy === 'hybrid') {
                     const signalStrength = generateTradingSignal(currentPrice);
                     
@@ -1355,7 +1338,6 @@
                     }
                 }
                 
-                // Exécuter les trades
                 if (shouldBuy && activeTrades.length === 0) {
                     await executeBuy();
                 } else if (shouldSell && activeTrades.length > 0) {
@@ -1364,7 +1346,7 @@
                     updateBotCycle('En attente signal...');
                 }
 
-            }, 30000); // Check toutes les 30 secondes
+            }, 30000);
         }
 
         function updatePerformanceStats() {
@@ -1399,20 +1381,17 @@
             }
         }
 
-        // ===== SENTIMENT ANALYSIS =====
         function startSentimentAnalysis() {
             updateSentiment();
-            setInterval(updateSentiment, 15000); // Toutes les 15 secondes
+            setInterval(updateSentiment, 15000);
         }
 
         function updateSentiment() {
-            // Simulation réaliste du sentiment multi-source
-            const twitter = 35 + Math.random() * 45; // 35-80
-            const reddit = 40 + Math.random() * 40; // 40-80
-            const news = 30 + Math.random() * 50; // 30-80
-            const fearGreed = 20 + Math.random() * 60; // 20-80
+            const twitter = 35 + Math.random() * 45;
+            const reddit = 40 + Math.random() * 40;
+            const news = 30 + Math.random() * 50;
+            const fearGreed = 20 + Math.random() * 60;
             
-            // Calcul score global pondéré
             sentimentScore = (twitter * 0.3 + reddit * 0.2 + news * 0.3 + fearGreed * 0.2);
             
             document.getElementById('sentimentScore').textContent = Math.round(sentimentScore);
@@ -1442,33 +1421,29 @@
             }
         }
 
-        // ===== WHALE TRACKING RÉEL =====
         function startWhaleTracking() {
             updateWhaleTracking();
-            setInterval(updateWhaleTracking, 30000); // Toutes les 30 secondes
+            setInterval(updateWhaleTracking, 30000);
         }
 
         async function updateWhaleTracking() {
             try {
-                // WHALE TRACKER RÉEL via BSCScan API
                 const pair = document.getElementById('tradingPair').value;
-                let tokenAddress = WBNB; // Par défaut BNB
+                let tokenAddress = WBNB;
                 
-                // Mapper les paires vers les adresses de tokens
                 const tokenMap = {
-                    'BTCUSDT': '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c', // BTCB
-                    'ETHUSDT': '0x2170Ed0880ac9A755fd29B2688956BD959F933F8', // ETH
+                    'BTCUSDT': '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c',
+                    'ETHUSDT': '0x2170Ed0880ac9A755fd29B2688956BD959F933F8',
                     'BNBUSDT': WBNB,
-                    'ADAUSDT': '0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47', // ADA
-                    'SOLUSDT': '0x570A5D26f7765Ecb712C0924E4De545B89fD43dF'  // SOL
+                    'ADAUSDT': '0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47',
+                    'SOLUSDT': '0x570A5D26f7765Ecb712C0924E4De545B89fD43dF'
                 };
                 
                 tokenAddress = tokenMap[pair] || WBNB;
                 
                 if (web3) {
-                    // Obtenir les derniers blocs et analyser les transactions
                     const latestBlock = await web3.eth.getBlockNumber();
-                    const startBlock = latestBlock - 50; // 50 derniers blocs (~2.5 minutes sur BSC)
+                    const startBlock = latestBlock - 50;
                     
                     let largeTxCount = 0;
                     let totalVolume = 0;
@@ -1477,27 +1452,22 @@
                     
                     const whaleAlerts = document.getElementById('whaleAlerts');
                     
-                    // Scanner les blocs récents
                     for (let blockNum = startBlock; blockNum <= latestBlock; blockNum += 5) {
                         try {
                             const block = await web3.eth.getBlock(blockNum, true);
                             
                             if (block && block.transactions) {
                                 for (const tx of block.transactions) {
-                                    // Vérifier si c'est une grosse transaction (> 10 BNB ou interaction avec PancakeSwap)
                                     if (tx.to === PANCAKE_ROUTER || tx.to === tokenAddress) {
                                         const valueInBNB = parseFloat(web3.utils.fromWei(tx.value || '0', 'ether'));
                                         
-                                        // Transaction whale si > 10 BNB
                                         if (valueInBNB > 10) {
                                             largeTxCount++;
                                             totalVolume += valueInBNB;
                                             
-                                            // Déterminer si c'est un achat ou une vente
                                             if (tx.to === PANCAKE_ROUTER) {
                                                 buyCount++;
                                                 
-                                                // Ajouter une alerte
                                                 const alertDiv = document.createElement('div');
                                                 alertDiv.className = 'whale-alert';
                                                 alertDiv.innerHTML = `
@@ -1526,21 +1496,18 @@
                                 }
                             }
                         } catch (blockError) {
-                            // Skip ce block
                             continue;
                         }
                     }
                     
-                    // Mettre à jour les stats
                     whaleCount = largeTxCount;
                     whaleBuys = buyCount;
                     whaleSells = sellCount;
                     
                     document.getElementById('activeWhales').textContent = whaleCount;
-                    document.getElementById('whaleVolume').textContent = '$' + (totalVolume * 600).toFixed(0); // Approximatif BNB à USD
+                    document.getElementById('whaleVolume').textContent = ' + (totalVolume * 600).toFixed(0);
                     document.getElementById('whaleBuySell').textContent = buyCount + '/' + sellCount;
                     
-                    // Signal whale
                     let whaleSignal = 'NEUTRE';
                     let signalColor = '#ffa500';
                     if (buyCount > sellCount + 2) {
@@ -1560,56 +1527,21 @@
                     }
                     
                 } else {
-                    // Si pas de web3, utiliser des données simulées réalistes
-                    whaleCount = Math.floor(Math.random() * 8);
-                    whaleBuys = Math.floor(Math.random() * 5);
-                    whaleSells = Math.floor(Math.random() * 5);
-                    const whaleVolume = Math.floor(Math.random() * 5000000) + 500000;
+                    whaleCount = 0;
+                    whaleBuys = 0;
+                    whaleSells = 0;
                     
-                    document.getElementById('activeWhales').textContent = whaleCount;
-                    document.getElementById('whaleVolume').textContent = '$' + (whaleVolume/1000000).toFixed(2) + 'M';
-                    document.getElementById('whaleBuySell').textContent = whaleBuys + '/' + whaleSells;
-                    
-                    let whaleSignal = 'NEUTRE';
-                    let signalColor = '#ffa500';
-                    if (whaleBuys > whaleSells + 1) {
-                        whaleSignal = 'ACHAT';
-                        signalColor = '#00ff00';
-                    } else if (whaleSells > whaleBuys + 1) {
-                        whaleSignal = 'VENTE';
-                        signalColor = '#ff0000';
-                    }
+                    document.getElementById('activeWhales').textContent = '--';
+                    document.getElementById('whaleVolume').textContent = '$--';
+                    document.getElementById('whaleBuySell').textContent = '--/--';
                     
                     const signalEl = document.getElementById('whaleSignal');
-                    signalEl.textContent = whaleSignal;
-                    signalEl.style.color = signalColor;
+                    signalEl.textContent = '--';
+                    signalEl.style.color = '#aaa';
                     
-                    // Ajouter quelques alertes simulées
-                    if (Math.random() > 0.7) {
-                        const whaleAlerts = document.getElementById('whaleAlerts');
-                        const alertDiv = document.createElement('div');
-                        alertDiv.className = 'whale-alert';
-                        
-                        const amount = (Math.random() * 50 + 10).toFixed(2);
-                        const action = Math.random() > 0.5 ? 'ACHAT' : 'VENTE';
-                        const actionColor = action === 'ACHAT' ? '#00ff00' : '#ff0000';
-                        
-                        alertDiv.innerHTML = `
-                            <div style="display: flex; justify-content: space-between;">
-                                <strong style="color: ${actionColor}">🐋 ${action} (Simulé)</strong>
-                                <span>${amount} BNB</span>
-                            </div>
-                            <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
-                                ${new Date().toLocaleTimeString()}<br>
-                                <em>Connectez wallet pour données réelles</em>
-                            </div>
-                        `;
-                        
-                        whaleAlerts.insertBefore(alertDiv, whaleAlerts.firstChild);
-                        
-                        while (whaleAlerts.children.length > 8) {
-                            whaleAlerts.removeChild(whaleAlerts.lastChild);
-                        }
+                    const whaleAlerts = document.getElementById('whaleAlerts');
+                    if (whaleAlerts.children.length === 0) {
+                        whaleAlerts.innerHTML = '<div style="text-align: center; color: #aaa; padding: 20px;">Connectez votre wallet pour voir les transactions whale réelles</div>';
                     }
                 }
                 
@@ -1619,10 +1551,9 @@
             }
         }
 
-        // ===== ARBITRAGE SCANNER =====
         function startArbitrageScanner() {
             updateArbitrage();
-            setInterval(updateArbitrage, 18000); // Toutes les 18 secondes
+            setInterval(updateArbitrage, 18000);
         }
 
         function updateArbitrage() {
@@ -1668,10 +1599,9 @@
             document.getElementById('arbBestProfit').textContent = bestProfit.toFixed(2) + '%';
         }
 
-        // ===== ANALYSE TECHNIQUE INNOVANTE =====
         function startTechnicalAnalysis() {
             updateTechnicalAnalysis();
-            setInterval(updateTechnicalAnalysis, 10000); // Toutes les 10 secondes
+            setInterval(updateTechnicalAnalysis, 10000);
         }
 
         function updateTechnicalAnalysis() {
@@ -1680,7 +1610,6 @@
             const prices = priceHistory.slice(-20);
             const currentPrice = prices[prices.length - 1];
             
-            // 1. SUPPORT ET RÉSISTANCE DYNAMIQUES
             const recentLows = [];
             const recentHighs = [];
             
@@ -1696,10 +1625,9 @@
             supportLevel = recentLows.length > 0 ? Math.max(...recentLows) : currentPrice * 0.98;
             resistanceLevel = recentHighs.length > 0 ? Math.min(...recentHighs) : currentPrice * 1.02;
             
-            document.getElementById('supportLevel').textContent = '$' + supportLevel.toFixed(2);
-            document.getElementById('resistanceLevel').textContent = '$' + resistanceLevel.toFixed(2);
+            document.getElementById('supportLevel').textContent = ' + supportLevel.toFixed(2);
+            document.getElementById('resistanceLevel').textContent = ' + resistanceLevel.toFixed(2);
             
-            // 2. FORCE DE TENDANCE (ADX-like mais simplifié)
             let upMoves = 0, downMoves = 0;
             for (let i = 1; i < prices.length; i++) {
                 if (prices[i] > prices[i-1]) upMoves++;
@@ -1712,7 +1640,6 @@
             document.getElementById('trendStrength').textContent = 
                 trendDirection + ' ' + trendStrength.toFixed(0) + '%';
             
-            // 3. MOMENTUM (Rate of Change)
             const oldPrice = prices[Math.floor(prices.length / 2)];
             momentum = ((currentPrice - oldPrice) / oldPrice) * 100;
             
@@ -1720,14 +1647,12 @@
             momentumEl.textContent = (momentum >= 0 ? '+' : '') + momentum.toFixed(2) + '%';
             momentumEl.style.color = momentum >= 0 ? '#00ff00' : '#ff0000';
             
-            // 4. VOLATILITÉ (Standard Deviation)
             const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
             const variance = prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / prices.length;
             const volatility = Math.sqrt(variance) / mean * 100;
             
             document.getElementById('volatility').textContent = volatility.toFixed(2) + '%';
             
-            // 5. VOLUME TREND (simulé)
             const volumeTrend = Math.random() > 0.5 ? 'CROISSANT' : 'DÉCROISSANT';
             const volumeTrendColor = volumeTrend === 'CROISSANT' ? '#00ff00' : '#ff0000';
             
@@ -1735,7 +1660,6 @@
             volumeEl.textContent = volumeTrend;
             volumeEl.style.color = volumeTrendColor;
             
-            // 6. GÉNÉRATION SIGNAL DE TRADING
             generateTradingSignal(currentPrice);
         }
 
@@ -1744,45 +1668,38 @@
             let signalColor = '#ffa500';
             let signalStrength = 0;
             
-            // Critère 1: Prix proche du support = ACHAT
             const distanceFromSupport = ((currentPrice - supportLevel) / currentPrice) * 100;
             if (distanceFromSupport < 1 && distanceFromSupport > -0.5) {
                 signalStrength += 25;
             }
             
-            // Critère 2: Prix proche de la résistance = VENTE
             const distanceFromResistance = ((resistanceLevel - currentPrice) / currentPrice) * 100;
             if (distanceFromResistance < 1 && distanceFromResistance > -0.5) {
                 signalStrength -= 25;
             }
             
-            // Critère 3: Sentiment bullish
             if (sentimentScore > 65) {
                 signalStrength += 20;
             } else if (sentimentScore < 40) {
                 signalStrength -= 20;
             }
             
-            // Critère 4: Whales achètent
             if (whaleBuys > whaleSells + 2) {
                 signalStrength += 20;
             } else if (whaleSells > whaleBuys + 2) {
                 signalStrength -= 20;
             }
             
-            // Critère 5: Momentum positif
             if (momentum > 2) {
                 signalStrength += 15;
             } else if (momentum < -2) {
                 signalStrength -= 15;
             }
             
-            // Critère 6: Opportunités d'arbitrage
             if (arbOpportunities > 3) {
                 signalStrength += 10;
             }
             
-            // Déterminer le signal final
             if (signalStrength >= 50) {
                 signal = '🟢 ACHAT FORT';
                 signalColor = '#00ff00';
@@ -1804,7 +1721,6 @@
             signalEl.textContent = signal;
             signalEl.style.color = signalColor;
             
-            // Log le signal si fort
             if (Math.abs(signalStrength) >= 50) {
                 addLog('INFO', `Signal détecté: ${signal} (Force: ${signalStrength})`);
             }
