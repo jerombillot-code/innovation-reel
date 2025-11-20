@@ -657,6 +657,11 @@
                             </button>
                         </div>
                         
+                        <!-- Bouton de test DEBUG - À RETIRER EN PRODUCTION -->
+                        <button onclick="console.log('Test clic direct'); alert('Bouton cliqué!'); startBot();" style="margin-top: 10px; padding: 10px; background: #ff00ff; color: #fff; border: none; border-radius: 5px; width: 100%; cursor: pointer; font-weight: bold;">
+                            🔧 TEST DEBUG - FORCER DÉMARRAGE
+                        </button>
+                        
                         <!-- Aide -->
                         <div style="margin-top: 12px; font-size: 0.75em; color: #aaa; text-align: center; line-height: 1.5;">
                             💡 Astuce: Utilisez <code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 3px;">Ctrl+Q</code> pour arrêt d'urgence
@@ -755,6 +760,10 @@
             addLog('INFO', '💎 Token officiel: JERCAT (0x197CF...cCF)');
             addLog('INFO', '🔗 DEX: https://dex-jercat.vercel.app/');
             addLog('INFO', 'Système prêt - Tous les indicateurs actifs');
+            
+            // Initialiser l'état du bot
+            console.log('Initialisation de l\'état du bot...');
+            updateBotChecklist();
         }
 
         function setupEventListeners() {
@@ -767,7 +776,17 @@
             document.getElementById('connectBtn').addEventListener('click', connectWallet);
             document.getElementById('buyBtn').addEventListener('click', executeBuy);
             document.getElementById('sellBtn').addEventListener('click', executeSell);
-            document.getElementById('startBotBtn').addEventListener('click', startBot);
+            
+            // Ajouter un listener de debug
+            const startBtn = document.getElementById('startBotBtn');
+            console.log('startBotBtn trouvé:', startBtn);
+            startBtn.addEventListener('click', function(e) {
+                console.log('CLIC DÉTECTÉ sur startBotBtn');
+                console.log('Bouton disabled?', startBtn.disabled);
+                console.log('Event:', e);
+                startBot();
+            });
+            
             document.getElementById('stopBotBtn').addEventListener('click', stopBot);
             document.getElementById('tradingPair').addEventListener('change', updatePrice);
             document.getElementById('tokenAddress').addEventListener('change', function() {
@@ -775,7 +794,10 @@
                 updateTokenChart();
             });
             
-            document.getElementById('autoMode').addEventListener('change', updateBotChecklist);
+            document.getElementById('autoMode').addEventListener('change', function() {
+                console.log('Mode auto changé:', this.checked);
+                updateBotChecklist();
+            });
             document.getElementById('strategy').addEventListener('change', updateBotChecklist);
             document.getElementById('tradeAmount').addEventListener('input', updateBotChecklist);
         }
@@ -1421,26 +1443,35 @@
         }
 
         function startBot() {
-            console.log('startBot appelé');
+            console.log('=== startBot appelé ===');
+            console.log('userAccount:', userAccount);
+            console.log('isMetaMask:', isMetaMask);
+            console.log('autoMode checked:', document.getElementById('autoMode').checked);
+            
             addLog('INFO', 'Tentative de démarrage du bot...');
             
             if (!userAccount) {
+                console.log('BLOQUÉ: Pas de userAccount');
                 alert('❌ Connectez votre wallet d\'abord!');
                 addLog('ERROR', 'Wallet non connecté - Impossible de démarrer le bot');
                 return;
             }
             
             if (isMetaMask) {
+                console.log('BLOQUÉ: MetaMask détecté');
                 alert('❌ Le mode automatique n\'est pas disponible avec MetaMask.\n\nMetaMask nécessite une validation manuelle pour chaque transaction.\n\nUtilisez une clé privée pour le mode automatique, ou tradez manuellement avec les boutons ACHETER/VENDRE.');
                 addLog('WARNING', 'Mode auto non disponible avec MetaMask');
                 return;
             }
             
             if (!document.getElementById('autoMode').checked) {
+                console.log('BLOQUÉ: Mode auto non coché');
                 alert('❌ Activez le mode auto dans la configuration!\n\nAllez dans Configuration → Mode Auto → Activez le switch');
                 addLog('WARNING', 'Mode auto non activé');
                 return;
             }
+            
+            console.log('Toutes les vérifications passées, affichage de la confirmation...');
 
             if (!confirm('⚠️ ATTENTION - DÉMARRAGE DU BOT!\n\n' +
                 '🤖 Le bot va effectuer des VRAIES transactions automatiques\n' +
@@ -1452,6 +1483,8 @@
                 addLog('INFO', 'Démarrage du bot annulé par l\'utilisateur');
                 return;
             }
+            
+            console.log('Confirmation OK, démarrage du bot...');
 
             botActive = true;
             botStartTime = Date.now();
